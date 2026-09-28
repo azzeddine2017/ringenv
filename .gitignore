@@ -1,0 +1,17 @@
+# Temporary download and archive files
+*.zip
+*.exe
+*.tar.gz
+*.chm
+*.pdf
+
+# Local environment and storage directories
+.ringenv/
+.rvenv/
+cache/
+dist/
+
+# Temporary and log files
+cookies.txt
+*.tmp
+*.log

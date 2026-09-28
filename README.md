@@ -83,7 +83,6 @@ ringenv/
 ## Installation
 
 ### Method 1: Install via Ring Package Manager (`ringpm`)
-Once hosted on GitHub, install directly from your repository:
 ```bash
 ringpm install ringenv from Azzeddine2017
 ```

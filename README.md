@@ -119,10 +119,13 @@ Downloads the matching release archive from GitHub releases, extracts it into `~
 
 ```bash
 # Install Ring version 1.27 (light release by default on Windows)
-ring main.ring install 1.27
+ringenv install 1.27
+
+# Reinstall even if already installed
+ringenv install 1.27 --force
 
 # Explicitly specify light release flag
-ring main.ring install 1.27 --light
+ringenv install 1.27 --light
 ```
 
 #### GitHub Releases Mapping:
@@ -142,7 +145,7 @@ ringenv remove 1.27
 ringenv uninstall 1.27
 ```
 
-### 4. List Installed Versions
+### 4. List Locally Installed Versions
 Inspects `~/.ringenv/versions/` and displays all installed Ring runtimes:
 
 ```bash
@@ -159,18 +162,46 @@ Installed Ring Versions (~/.ringenv/versions):
 Total: 1 version(s) installed.
 ```
 
-### 4. Create a Virtual Environment
+### 5. List Available Remote Versions
+Queries official GitHub releases to display available Ring versions for download:
+
+```bash
+ringenv list-remote
+# Or alternatively:
+ringenv list --remote
+```
+
+Example output:
+```
+=================================================
+Available Ring Versions (GitHub Releases):
+=================================================
+  * 1.27  [installed]
+  * 1.26  [installed]
+    1.25
+    1.24
+    1.23
+=================================================
+To install a version, run:
+  ringenv install <version>
+=================================================
+```
+
+### 6. Create a Virtual Environment
 Creates an isolated project virtual environment with runtime files, binary executables, and shell activation scripts.
 
 ```bash
 # Create default .rvenv directory using specified version
-ring main.ring venv create .rvenv --version 1.27
+ringenv venv create .rvenv --version 1.27
+
+# Clear existing virtual environment and recreate fresh
+ringenv venv create .rvenv --version 1.27 --clear
 
 # Create virtual environment in custom folder
-ring main.ring venv create myenv --version 1.27
+ringenv venv create myenv --version 1.27
 
 # If only one version is installed, --version is automatically detected
-ring main.ring venv create .rvenv
+ringenv venv create .rvenv
 ```
 
 ---

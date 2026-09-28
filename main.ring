@@ -12,6 +12,7 @@ load "src/core/extractor.ring"
 load "src/commands/cmd_install.ring"
 load "src/commands/cmd_remove.ring"
 load "src/commands/cmd_list.ring"
+load "src/commands/cmd_list_remote.ring"
 load "src/commands/cmd_venv.ring"
 
 func main
@@ -44,25 +45,39 @@ func main
             showVersion()
 
         on "list"
-            cmdList()
+            if len(aArgs) >= 2 and (lower(aArgs[2]) = "--remote" or lower(aArgs[2]) = "-r")
+                cmdListRemote()
+            else
+                cmdList()
+            ok
+
+        on "list-remote"
+            cmdListRemote()
+
+        on "available"
+            cmdListRemote()
 
         on "install"
             if len(aArgs) < 2
                 ? "Error: Missing version argument."
-                ? "Usage:   ringenv install <version> [--light]"
+                ? "Usage:   ringenv install <version> [--light] [--force]"
                 ? "Example: ringenv install 1.27"
                 return
             ok
 
             cVersion = aArgs[2]
             lLight = false
+            lForce = false
             for i = 3 to len(aArgs)
-                if lower(aArgs[i]) = "--light"
+                cArg = lower(aArgs[i])
+                if cArg = "--light"
                     lLight = true
+                but cArg = "--force" or cArg = "-f"
+                    lForce = true
                 ok
             next
 
-            cmdInstall(cVersion, lLight)
+            cmdInstall(cVersion, lLight, lForce)
 
         on "remove"
             if len(aArgs) < 2
@@ -136,10 +151,11 @@ func showHelp
     ? "  ring main.ring <command> [arguments] [options]"
     ? ""
     ? "Commands:"
-    ? "  install <version> [--light]    Download and install a Ring version"
+    ? "  install <version> [options]    Download and install a Ring version"
     ? "  remove  <version>              Uninstall and remove an installed version"
-    ? "  list                           Display all installed Ring versions"
-    ? "  venv create <path> [-v <ver>]  Create an isolated virtual environment"
+    ? "  list                           Display all locally installed Ring versions"
+    ? "  list-remote                    Display available Ring versions on GitHub"
+    ? "  venv create <path> [options]   Create an isolated virtual environment"
     ? "  version                        Display ringenv version and platform info"
     ? "  help                           Display this help manual"
     ? ""
@@ -147,17 +163,21 @@ func showHelp
     ? ""
     ? "  1. Install Ring version:"
     ? "     ringenv install 1.27"
+    ? "     ringenv install 1.27 --force          # Reinstall even if already installed"
     ? "     ringenv install 1.26 --light"
     ? ""
     ? "  2. Remove installed Ring version:"
     ? "     ringenv remove 1.27"
     ? "     ringenv uninstall 1.26"
     ? ""
-    ? "  3. List installed versions:"
-    ? "     ringenv list"
+    ? "  3. List installed and available versions:"
+    ? "     ringenv list                          # Locally installed versions"
+    ? "     ringenv list-remote                   # Remote releases on GitHub"
+    ? "     ringenv list --remote                 # Alternative remote listing"
     ? ""
     ? "  4. Create virtual environment:"
     ? "     ringenv venv create .rvenv --version 1.27"
+    ? "     ringenv venv create .rvenv --clear    # Clear and recreate fresh"
     ? "     ringenv venv create myproject_env -v 1.26"
     ? "     ringenv venv create .rvenv"
     ? ""

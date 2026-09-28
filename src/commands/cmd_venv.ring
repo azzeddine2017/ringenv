@@ -254,6 +254,7 @@ func cmdVenv aArgs
     cAction = ""
     cTargetFolder = ""
     cVersion = ""
+    lClear = false
 
     nLen = len(aArgs)
     i = 1
@@ -268,6 +269,8 @@ func cmdVenv aArgs
             ok
         but substr(cArg, "--version=") > 0
             cVersion = substr(cArg, 11)
+        but cArg = "--clear"
+            lClear = true
         but substr(cArg, 1, 1) != "-"
             if cAction = "create" and cTargetFolder = ""
                 cTargetFolder = cArg
@@ -334,8 +337,14 @@ func cmdVenv aArgs
     cTarget = resolveCallerPath(cTargetFolder)
     cEnvName = getBaseName(cTarget)
 
+    # Clear existing environment if requested
+    if lClear and direxists(cTarget)
+        ? "Clearing existing virtual environment at: " + toNativePath(cTarget)
+        deleteFolder(cTarget)
+    ok
+
     ? "================================================="
-    ? "Creating virtual environment: " + cTarget
+    ? "Creating virtual environment: " + toNativePath(cTarget)
     ? "Using Ring version: " + cVersion
     ? "================================================="
 

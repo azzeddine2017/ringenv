@@ -33,6 +33,7 @@ aPackageInfo = [
 		"src/commands/cmd_install.ring",
 		"src/commands/cmd_remove.ring",
 		"src/commands/cmd_list.ring",
+		"src/commands/cmd_list_remote.ring",
 		"src/commands/cmd_venv.ring",
 		"tests/test_ringenv.ring",
 		"setup.bat",

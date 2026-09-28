@@ -94,6 +94,14 @@ func runAllTests
     lRemoveResult = cmdRemove("999.999.nonexistent")
     assertTrue("cmdRemove returns false for non-existent version", lRemoveResult = false)
 
+    # Test 10: Remote release tag parsing
+    load "../src/commands/cmd_list_remote.ring"
+    cMockJson = '[{"tag_name":"v1.27"},{"tag_name":"v1.26"},{"tag_name":"1.25"}]'
+    aParsed = parseReleaseTags(cMockJson)
+    assertEqual("parseReleaseTags extracts 3 tags", len(aParsed), 3)
+    assertEqual("parseReleaseTags strips v prefix", aParsed[1], "1.27")
+    assertEqual("parseReleaseTags keeps non-v tag", aParsed[3], "1.25")
+
     # Cleanup test artifacts
     deleteFolder("./tests/test_tmp")
     assertTrue("deleteFolder removes directory recursively", not direxists("./tests/test_tmp"))

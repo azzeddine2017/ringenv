@@ -17,7 +17,7 @@ func getReleaseAsset cVersion, lLight
     ok
 
 # Execute install command
-func cmdInstall cVersion, lLight
+func cmdInstall cVersion, lLight, lForce
     if cVersion = ""
         ? "Error: Please specify the version to install."
         ? "Example: ringenv install 1.27"
@@ -28,18 +28,24 @@ func cmdInstall cVersion, lLight
 
     cVersionDir = getVersionsDir() + "/" + cVersion
     cBinFile = getBinaryName()
+    cAsset = getReleaseAsset(cVersion, lLight)
+    cCacheZip = getCacheDir() + "/" + cAsset
 
     # Check if already installed
     if direxists(cVersionDir)
-        if fexists(cVersionDir + "/bin/" + cBinFile) or fexists(cVersionDir + "/" + cBinFile)
+        if lForce
+            ? "Force reinstall requested. Removing previous installation of Ring " + cVersion + "..."
+            deleteFolder(cVersionDir)
+            if fexists(cCacheZip)
+                remove(cCacheZip)
+            ok
+        but fexists(cVersionDir + "/bin/" + cBinFile) or fexists(cVersionDir + "/" + cBinFile)
             ? "Ring " + cVersion + " is already installed at: " + cVersionDir
+            ? "Use 'ringenv install " + cVersion + " --force' to force a fresh reinstall."
             ? "Use 'ringenv venv create <target> --version " + cVersion + "' to create a virtual environment."
             return true
         ok
     ok
-
-    cAsset = getReleaseAsset(cVersion, lLight)
-    cCacheZip = getCacheDir() + "/" + cAsset
 
     ? "================================================="
     ? "Installing Ring " + cVersion + " for " + getPlatformName()

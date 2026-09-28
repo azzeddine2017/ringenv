@@ -85,7 +85,7 @@ ringenv/
 ### Method 1: Install via Ring Package Manager (`ringpm`)
 Once hosted on GitHub, install directly from your repository:
 ```bash
-ringpm install ringenv from <github_username>
+ringpm install ringenv from Azzeddine2017
 ```
 After installation, `ringenv` is immediately available in your terminal from any directory:
 ```bash

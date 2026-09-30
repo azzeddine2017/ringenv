@@ -3,7 +3,6 @@
 
 load "stdlibcore.ring"
 load "libcurl.ring"
-load "ziplib.ring"
 
 load "src/core/ui_style.ring"
 load "src/core/os_helper.ring"

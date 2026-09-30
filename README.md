@@ -14,7 +14,7 @@ Built natively in Ring, `ringenv` enables developers to download and manage mult
   - Windows Command Prompt (`activate.bat` / `deactivate.bat`)
   - Windows PowerShell (`activate.ps1` with prompt customization)
   - Linux & macOS Bash/Zsh (`bin/activate` with `deactivate` function)
-- **Native Ecosystem Integration**: Built with native Ring standard libraries (`libcurl.ring`, `ziplib.ring`, and `stdlibcore.ring`).
+- **Native Ecosystem Integration**: Built with native Ring standard libraries (`libcurl.ring` and `stdlibcore.ring`) with zero external C dependencies.
 - **Download Progress Meter**: Real-time download progress displaying downloaded megabytes, total size, and completion percentage.
 - **Relocatable Environments**: Shell activation scripts compute the environment path dynamically, allowing environments to remain functional across workspace moves.
 
@@ -75,10 +75,9 @@ ringenv/
 
 ## Requirements
 
-- **Ring Programming Language** (v1.19+ recommended, including 1.26 and 1.27)
+- **Ring Programming Language** (v1.19+ recommended, including 1.26, 1.27, and LightRelease builds)
 - Ring standard extensions:
   - `libcurl.ring`
-  - `ziplib.ring`
   - `stdlibcore.ring`
 
 ---

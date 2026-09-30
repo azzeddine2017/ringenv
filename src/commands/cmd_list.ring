@@ -27,9 +27,8 @@ func cmdList
         return true
     ok
 
-    ? "================================================="
-    ? "Installed Ring Versions (" + cVersionsDir + "):"
-    ? "================================================="
+    uiBanner("Installed Ring Versions", toNativePath(cVersionsDir))
+    ? ""
 
     cBinFile = getBinaryName()
     for cVer in aVersions
@@ -41,15 +40,17 @@ func cmdList
         cRuntimeDir = findVersionRuntimeDir(cVerDir)
         cBinPath = cRuntimeDir + "/bin/" + cBinFile
 
-        cStatus = ""
+        cStatusBadge = ""
         if fexists(cBinPath) or fexists(cRuntimeDir + "/" + cBinFile)
-            cStatus = " [ready]"
+            cStatusBadge = uiBadge("ready", C_BOLD + C_BGREEN)
         else
-            cStatus = " [incomplete]"
+            cStatusBadge = uiBadge("incomplete", C_BOLD + C_BYELLOW)
         ok
-        ? "  * " + cVer + cStatus
+        ? "  " + uiStyle("*", C_BOLD + C_BCYAN) + " " + uiStyle(cVer, C_BOLD + C_WHITE) + "  " + cStatusBadge
     next
 
-    ? "================================================="
-    ? "Total: " + len(aVersions) + " version(s) installed."
+    ? ""
+    uiDivider()
+    ? "  " + uiInfo("Total: " + len(aVersions) + " version(s) installed.")
+    ? uiStyle("======================================================================", C_CYAN)
     return true

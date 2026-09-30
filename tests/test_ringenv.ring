@@ -2,8 +2,10 @@
 
 load "stdlibcore.ring"
 load "../src/core/os_helper.ring"
+load "../src/core/ui_style.ring"
 load "../src/commands/cmd_list.ring"
 load "../src/commands/cmd_venv.ring"
+load "../src/commands/cmd_hub.ring"
 
 nPassed = 0
 nFailed = 0
@@ -101,6 +103,55 @@ func runAllTests
     assertEqual("parseReleaseTags extracts 3 tags", len(aParsed), 3)
     assertEqual("parseReleaseTags strips v prefix", aParsed[1], "1.27")
     assertEqual("parseReleaseTags keeps non-v tag", aParsed[3], "1.25")
+
+    # Test 11: ANSI UI styling helpers
+    cStyled = uiStyle("test", C_BOLD)
+    assertTrue("uiStyle wraps text with escape codes", substr(cStyled, "test") > 0 and substr(cStyled, C_RESET) > 0)
+    assertEqual("uiBadge formats text in brackets", uiBadge("ready", C_GREEN), uiStyle("[ready]", C_GREEN))
+
+    # Test 12: Community hub libraries list
+    aCommunityLibs = getCuratedCommunityLibs()
+    assertTrue("Community hub contains curated external libraries", len(aCommunityLibs) >= 10)
+    lHasXlsx = false
+    for aLib in aCommunityLibs
+        if aLib[:name] = "xlsxlib"
+            lHasXlsx = true
+            assertEqual("xlsxlib author is Azzeddine2017", aLib[:author], "Azzeddine2017")
+        ok
+    next
+    assertTrue("Community hub includes xlsxlib", lHasXlsx)
+
+    # Test 13: Registry block field extractor
+    cSampleBlock = ':name = "testlib", :description = "Test Description", :ProviderUserName = "TestDev"'
+    assertEqual("extractRegistryField extracts name", extractRegistryField(cSampleBlock, "name"), "testlib")
+    assertEqual("extractRegistryField extracts description", extractRegistryField(cSampleBlock, "description"), "Test Description")
+    assertEqual("extractRegistryField extracts author case-insensitively", extractRegistryField(cSampleBlock, "providerusername"), "TestDev")
+
+    # Test 14: Numeric index and name package resolution
+    aSampleLibs = [[:name = "firstlib", :author = "dev1"], [:name = "ring-libsql", :author = "yousif"]]
+    aFoundByNum = findLibByIdOrName(aSampleLibs, "2")
+    assertEqual("findLibByIdOrName resolves numeric index 2", aFoundByNum[:name], "ring-libsql")
+    aFoundByName = findLibByIdOrName(aSampleLibs, "ring-libsql")
+    assertEqual("findLibByIdOrName resolves package with hyphen", aFoundByName[:name], "ring-libsql")
+
+    # Test 15: Markdown README overview extractor
+    cSampleReadme = "# MyPackage" + nl + "> A great library for Ring" + nl + nl + "Features and details..." + nl + "## Installation" + nl + "Install instructions"
+    cOverview = extractReadmeOverview(cSampleReadme)
+    assertTrue("extractReadmeOverview extracts body before H2", substr(cOverview, "A great library for Ring") > 0)
+    assertTrue("extractReadmeOverview stops before Installation", substr(cOverview, "Install instructions") = 0)
+
+    # Test 16: Community vs Official library filtering
+    aCommPkg = [:name = "xlsxlib", :author = "Azzeddine2017", :desc = "Excel"]
+    aOfficialPkg = [:name = "analogclock", :author = "ringpackages", :desc = "Clock game"]
+    assertTrue("isCommunityLib returns true for community author", isCommunityLib(aCommPkg))
+    assertTrue("isCommunityLib returns false for core ringpackages", not isCommunityLib(aOfficialPkg))
+    aMixed = [aCommPkg, aOfficialPkg]
+    aOnlyComm = filterLibs(aMixed, "community")
+    assertEqual("filterLibs community returns 1 package", len(aOnlyComm), 1)
+    assertEqual("filterLibs community includes xlsxlib", aOnlyComm[1][:name], "xlsxlib")
+    aOnlyOfficial = filterLibs(aMixed, "official")
+    assertEqual("filterLibs official returns 1 package", len(aOnlyOfficial), 1)
+    assertEqual("filterLibs official includes analogclock", aOnlyOfficial[1][:name], "analogclock")
 
     # Cleanup test artifacts
     deleteFolder("./tests/test_tmp")

@@ -82,9 +82,8 @@ func fetchRemoteReleases
 func cmdListRemote
     initRingenvDirs()
 
-    ? "================================================="
-    ? "Available Ring Versions (GitHub Releases):"
-    ? "================================================="
+    uiBanner("Available Ring Versions", "Official binary releases hosted on GitHub")
+    ? ""
 
     aReleases = fetchRemoteReleases()
 
@@ -102,14 +101,15 @@ func cmdListRemote
     for cVer in aReleases
         lInstalled = (find(aInstalled, cVer) > 0)
         if lInstalled
-            ? "  * " + cVer + "  [installed]"
+            ? "  " + uiStyle("*", C_BOLD + C_BCYAN) + " " + uiStyle(cVer, C_BOLD + C_WHITE) + "  " + uiBadge("installed", C_BOLD + C_BGREEN)
         else
-            ? "    " + cVer
+            ? "    " + uiStyle(cVer, C_DIM)
         ok
     next
 
-    ? "================================================="
-    ? "To install a version, run:"
-    ? "  ringenv install <version>"
-    ? "================================================="
+    ? ""
+    uiDivider()
+    ? "  " + uiStyle("To install a version, run:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("ringenv install <version>", C_BOLD + C_BYELLOW)
+    ? uiStyle("======================================================================", C_CYAN)
     return true

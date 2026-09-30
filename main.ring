@@ -5,6 +5,7 @@ load "stdlibcore.ring"
 load "libcurl.ring"
 load "ziplib.ring"
 
+load "src/core/ui_style.ring"
 load "src/core/os_helper.ring"
 load "src/core/zipengine.ring"
 load "src/core/downloader.ring"
@@ -13,10 +14,18 @@ load "src/commands/cmd_install.ring"
 load "src/commands/cmd_remove.ring"
 load "src/commands/cmd_list.ring"
 load "src/commands/cmd_list_remote.ring"
+load "src/commands/cmd_hub.ring"
 load "src/commands/cmd_venv.ring"
 
 func main
     aArgs = parseCliArgs()
+
+    # Check for --no-color flag across arguments
+    for cArg in aArgs
+        if lower(cArg) = "--no-color"
+            setColorEnabled(false)
+        ok
+    next
 
     if len(aArgs) = 0
         showHelp()
@@ -97,6 +106,15 @@ func main
             ok
             cmdRemove(aArgs[2])
 
+        on "hub"
+            cmdHub(aArgs)
+
+        on "libs"
+            cmdHub(aArgs)
+
+        on "community"
+            cmdHub(aArgs)
+
         on "venv"
             aVenvArgs = []
             for i = 2 to len(aArgs)
@@ -105,8 +123,8 @@ func main
             cmdVenv(aVenvArgs)
 
         other
-            ? "Unknown command: " + cCommand
-            ? "Run 'ringenv help' to view available commands."
+            ? uiError("Unknown command: " + cCommand)
+            ? "Run " + uiStyle("ringenv help", C_BOLD + C_BYELLOW) + " to view available commands."
     off
 
 # Extract user arguments from sysargv
@@ -137,58 +155,77 @@ func parseCliArgs
     return aArgs
 
 func showVersion
-    ? "ringenv version 1.0.0"
-    ? "Platform: " + getPlatformName()
-    ? "Storage:  " + getRingenvDir()
+    uiBanner("ringenv v1.1.0", "Isolated Virtual Environment & Version Manager for Ring")
+    ? ""
+    ? "  " + uiStyle("Version:  ", C_BOLD + C_WHITE) + uiStyle("1.1.0", C_BOLD + C_BGREEN)
+    ? "  " + uiStyle("Platform: ", C_BOLD + C_WHITE) + uiStyle(getPlatformName(), C_BOLD + C_BYELLOW)
+    ? "  " + uiStyle("Storage:  ", C_BOLD + C_WHITE) + uiStyle(toNativePath(getRingenvDir()), C_DIM)
+    ? "  " + uiStyle("Author:   ", C_BOLD + C_WHITE) + uiAuthor("Azzeddine2017")
+    ? "  " + uiStyle("Source:   ", C_BOLD + C_WHITE) + uiStyle("https://github.com/Azzeddine2017/ringenv", C_UNDERLINE + C_BCYAN)
+    ? uiStyle("======================================================================", C_CYAN)
 
 func showHelp
-    ? "======================================================================"
-    ? "  ringenv - Isolated Virtual Environment & Version Manager for Ring   "
-    ? "======================================================================"
+    uiBanner("ringenv v1.1.0", "Isolated Virtual Environment & Version Manager for Ring")
     ? ""
-    ? "Usage:"
-    ? "  ringenv <command> [arguments] [options]"
-    ? "  ring main.ring <command> [arguments] [options]"
+    ? "  " + uiStyle("Usage:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("ringenv <command> [arguments] [options]", C_BOLD + C_BYELLOW)
+    ? "    " + uiStyle("ring main.ring <command> [arguments] [options]", C_DIM)
     ? ""
-    ? "Commands:"
-    ? "  install <version> [options]    Download and install a Ring version"
-    ? "  remove  <version>              Uninstall and remove an installed version"
-    ? "  list                           Display all locally installed Ring versions"
-    ? "  list-remote                    Display available Ring versions on GitHub"
-    ? "  venv create <path> [options]   Create an isolated virtual environment"
-    ? "  version                        Display ringenv version and platform info"
-    ? "  help                           Display this help manual"
+    ? "  " + uiStyle("Core Commands:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("install <ver> [opts]", C_BOLD + C_BCYAN) + "     Download and install a Ring version"
+    ? "    " + uiStyle("remove  <ver>", C_BOLD + C_BCYAN) + "            Uninstall and remove an installed version"
+    ? "    " + uiStyle("list", C_BOLD + C_BCYAN) + "                    Display all locally installed Ring versions"
+    ? "    " + uiStyle("list-remote", C_BOLD + C_BCYAN) + "             Display available Ring versions on GitHub"
+    ? "    " + uiStyle("venv create <path>", C_BOLD + C_BCYAN) + "      Create an isolated virtual environment"
     ? ""
-    ? "Command Details & Examples:"
+    ? "  " + uiStyle("Community Hub & External Libraries:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("hub / libs", C_BOLD + C_BMAGENTA) + "               Explore community libraries (default view)"
+    ? "    " + uiStyle("hub --all", C_BOLD + C_BMAGENTA) + "                Show all 250+ packages (including games & samples)"
+    ? "    " + uiStyle("hub --official", C_BOLD + C_BMAGENTA) + "           Show official Ring packages and samples only"
+    ? "    " + uiStyle("hub search <query>", C_BOLD + C_BMAGENTA) + "       Search across all packages by keyword"
+    ? "    " + uiStyle("hub info <# or name>", C_BOLD + C_BMAGENTA) + "     Show library details and repository README"
+    ? "    " + uiStyle("hub install <# or name>", C_BOLD + C_BMAGENTA) + "  Install library by row number or name"
     ? ""
-    ? "  1. Install Ring version:"
+    ? "  " + uiStyle("General Commands:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("version", C_BOLD + C_BCYAN) + "                 Display ringenv version and platform info"
+    ? "    " + uiStyle("help", C_BOLD + C_BCYAN) + "                    Display this help manual"
+    ? ""
+    uiDivider()
+    ? "  " + uiStyle("Practical Examples:", C_BOLD + C_WHITE)
+    ? ""
+    ? "  " + uiStyle("1. Manage Ring language versions:", C_BOLD + C_BYELLOW)
     ? "     ringenv install 1.27"
     ? "     ringenv install 1.27 --force          # Reinstall even if already installed"
     ? "     ringenv install 1.26 --light"
+    ? "     ringenv remove 1.26"
     ? ""
-    ? "  2. Remove installed Ring version:"
-    ? "     ringenv remove 1.27"
-    ? "     ringenv uninstall 1.26"
-    ? ""
-    ? "  3. List installed and available versions:"
+    ? "  " + uiStyle("2. List versions:", C_BOLD + C_BYELLOW)
     ? "     ringenv list                          # Locally installed versions"
     ? "     ringenv list-remote                   # Remote releases on GitHub"
-    ? "     ringenv list --remote                 # Alternative remote listing"
     ? ""
-    ? "  4. Create virtual environment:"
+    ? "  " + uiStyle("3. Explore external community libraries (Bert's addition!):", C_BOLD + C_BYELLOW)
+    ? "     ringenv hub                           # List community libraries only (fast & clean)"
+    ? "     ringenv hub --all                     # List all 250+ packages (games, demos, etc.)"
+    ? "     ringenv hub --official                # List official packages & samples only"
+    ? "     ringenv hub search excel              # Search for Excel libraries"
+    ? "     ringenv hub info 1                    # View details & README by row number"
+    ? "     ringenv hub info xlsxlib              # View details & README by package name"
+    ? "     ringenv hub install 1                 # Install library by row number"
+    ? "     ringenv hub install xlsxlib           # Install library by package name"
+    ? ""
+    ? "  " + uiStyle("4. Project virtual environments:", C_BOLD + C_BYELLOW)
     ? "     ringenv venv create .rvenv --version 1.27"
     ? "     ringenv venv create .rvenv --clear    # Clear and recreate fresh"
     ? "     ringenv venv create myproject_env -v 1.26"
-    ? "     ringenv venv create .rvenv"
     ? ""
-    ? "  5. Activating virtual environment:"
-    ? "     Windows CMD:         <path>\Scripts\activate.bat"
-    ? "     Windows PowerShell:  <path>\Scripts\activate.ps1"
+    ? "  " + uiStyle("5. Activating virtual environment:", C_BOLD + C_BYELLOW)
+    ? "     Windows CMD:         <path>\\Scripts\\activate.bat"
+    ? "     Windows PowerShell:  <path>\\Scripts\\activate.ps1"
     ? "     Linux / macOS:       source <path>/bin/activate"
     ? ""
-    ? "  6. Deactivating virtual environment:"
+    ? "  " + uiStyle("6. Deactivating virtual environment:", C_BOLD + C_BYELLOW)
     ? "     deactivate"
     ? ""
-    ? "Online Repository:"
-    ? "  https://github.com/Azzeddine2017/ringenv"
-    ? "======================================================================"
+    uiDivider()
+    ? "  " + uiStyle("GitHub Repository: ", C_BOLD + C_WHITE) + uiStyle("https://github.com/Azzeddine2017/ringenv", C_UNDERLINE + C_BCYAN)
+    ? uiStyle("======================================================================", C_CYAN)

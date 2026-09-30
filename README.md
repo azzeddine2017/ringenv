@@ -57,12 +57,15 @@ ringenv/
 ├── src/
 │   ├── core/
 │   │   ├── os_helper.ring      # OS detection, paths, directory creation, file operations
+│   │   ├── ui_style.ring       # Rich ANSI terminal formatting, themes, badges, and colors
 │   │   ├── downloader.ring     # LibCurl wrapper with progress callback and HTTP validation
 │   │   ├── zipengine.ring      # ZipEngine class wrapper for archive handling
 │   │   └── extractor.ring      # Archive unpacking and permission management
 │   └── commands/
 │       ├── cmd_install.ring    # Downloads and installs target Ring version
 │       ├── cmd_list.ring       # Lists locally installed Ring versions
+│       ├── cmd_list_remote.ring# Lists remote Ring versions available on GitHub
+│       ├── cmd_hub.ring        # Community package discovery, live READMEs, and installation
 │       └── cmd_venv.ring       # Creates project virtual environments
 └── tests/
     └── test_ringenv.ring       # Automated test suite
@@ -203,6 +206,44 @@ ringenv venv create myenv --version 1.27
 # If only one version is installed, --version is automatically detected
 ringenv venv create .rvenv
 ```
+
+### 7. Community Libraries Hub (External Packages)
+Discover and install external libraries developed by the Ring community (Excel, Word, PowerPoint, PDF, QR Code, Barcode, Web Frameworks, FFI, LibSQL, etc.):
+
+```bash
+# List community-developed external libraries (Default View - compact & clean)
+ringenv hub
+# Or:
+ringenv libs
+
+# List all 250+ packages in the registry (including core extensions, samples & games)
+ringenv hub --all
+
+# List official Ring packages and samples only (@ringpackages)
+ringenv hub --official
+
+# Search across all packages (community & official) by keyword:
+ringenv hub search excel
+ringenv hub search sql
+
+# View library details and live overview extracted from the repository README.md:
+# (Specify by package name or by table row number #)
+ringenv hub info xlsxlib
+ringenv hub info 1
+ringenv hub info ring-libsql
+
+# Install a community library into current environment via ringpm:
+# (Specify by package name or by table row number #)
+ringenv hub install xlsxlib
+ringenv hub install 1
+```
+
+#### Key Features of the Hub:
+- **Smart Community Filtering:** Displays curated, community-developed libraries by default (ideal for finding productivity libraries without scrolling through 200+ demo games).
+- **Fast Silent Caching:** Automatically caches registry data locally with zero delay and no progress bar clutter.
+- **Numbered Library Table:** Every package is assigned an index number `#` so you can install or inspect packages without typing long names.
+- **Repository README Extraction:** `ringenv hub info` automatically fetches and parses the live `README.md` directly from the library's GitHub repository, displaying a formatted summary of what the library does.
+- **ANSI Terminal Styling:** Full ANSI color highlighting with automatic detection and `--no-color` / `NO_COLOR` support.
 
 ---
 

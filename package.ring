@@ -5,11 +5,11 @@ aPackageInfo = [
 	:developer = "Azzeddine Remmal",
 	:email = "azzeddine.remmal@gmail.com",
 	:license = "MIT License",
-	:version = "1.0.0",
+	:version = "1.0.1",
 	:ringversion = "1.26",
 	:versions = [
 		[
-			:version = "1.0.0",
+			:version = "1.0.1",
 			:branch = "master"
 		]
 	],
@@ -26,6 +26,7 @@ aPackageInfo = [
 		"package.ring",
 		"bin/ringenv.bat",
 		"bin/ringenv",
+		"src/core/ui_style.ring",
 		"src/core/os_helper.ring",
 		"src/core/zipengine.ring",
 		"src/core/downloader.ring",
@@ -34,6 +35,7 @@ aPackageInfo = [
 		"src/commands/cmd_remove.ring",
 		"src/commands/cmd_list.ring",
 		"src/commands/cmd_list_remote.ring",
+		"src/commands/cmd_hub.ring",
 		"src/commands/cmd_venv.ring",
 		"tests/test_ringenv.ring",
 		"setup.bat",

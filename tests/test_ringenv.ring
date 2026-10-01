@@ -3,6 +3,7 @@
 load "stdlibcore.ring"
 load "../package.ring"
 load "../src/core/os_helper.ring"
+load "../src/core/categories.ring"
 load "../src/core/ui_style.ring"
 load "../src/commands/cmd_list.ring"
 load "../src/commands/cmd_venv.ring"
@@ -161,6 +162,43 @@ func runAllTests
     aOnlyOfficial = filterLibs(aMixed, "official")
     assertEqual("filterLibs official returns 1 package", len(aOnlyOfficial), 1)
     assertEqual("filterLibs official includes analogclock", aOnlyOfficial[1][:name], "analogclock")
+
+    # Test 17: Category definition and alias resolution
+    assertTrue("getCategoriesInfo returns at least 9 categories", len(getCategoriesInfo()) >= 9)
+    assertEqual("resolveCategoryAlias maps data to data", resolveCategoryAlias("data"), "data")
+    assertEqual("resolveCategoryAlias maps office alias to data", resolveCategoryAlias("office"), "data")
+    assertEqual("resolveCategoryAlias maps docs alias to data", resolveCategoryAlias("docs"), "data")
+    assertEqual("resolveCategoryAlias maps web to web", resolveCategoryAlias("web"), "web")
+    assertEqual("resolveCategoryAlias maps api to web", resolveCategoryAlias("api"), "web")
+    assertEqual("resolveCategoryAlias maps db to database", resolveCategoryAlias("db"), "database")
+    assertEqual("resolveCategoryAlias maps games to gamedev", resolveCategoryAlias("games"), "gamedev")
+    assertEqual("resolveCategoryAlias maps ai to ai-science", resolveCategoryAlias("ai"), "ai-science")
+    assertEqual("resolveCategoryAlias maps build to build", resolveCategoryAlias("build"), "build")
+    assertEqual("resolveCategoryAlias maps packaging to build", resolveCategoryAlias("packaging"), "build")
+    assertEqual("resolveCategoryAlias maps apk to build", resolveCategoryAlias("apk"), "build")
+    assertEqual("resolveCategoryAlias maps exe to build", resolveCategoryAlias("exe"), "build")
+
+    # Test 18: Package category checks
+    assertTrue("xlsxlib belongs to data category", isPackageInCategory("xlsxlib", "data"))
+    assertTrue("docxlib belongs to data category", isPackageInCategory("docxlib", "data"))
+    assertTrue("bolt belongs to web category", isPackageInCategory("bolt", "web"))
+    assertTrue("ringquantum belongs to ai-science category", isPackageInCategory("ringquantum", "ai-science"))
+    assertTrue("ring2exe-plus belongs to build category", isPackageInCategory("ring2exe-plus", "build"))
+    assertTrue("ring2apk belongs to build category", isPackageInCategory("ring2apk", "build"))
+    assertEqual("getPackageCategory identifies xlsxlib as data", getPackageCategory("xlsxlib"), "data")
+    assertEqual("getPackageCategory identifies bolt as web", getPackageCategory("bolt"), "web")
+    assertEqual("getPackageCategory identifies ring2exe-plus as build", getPackageCategory("ring2exe-plus"), "build")
+    assertEqual("getPackageCategory identifies ring2apk as build", getPackageCategory("ring2apk"), "build")
+
+    # Test 19: Export category bundle to file
+    cTestBundleFile = "./tests/test_tmp_bundle.txt"
+    lExportOk = exportCategoryBundle("data", cTestBundleFile)
+    assertTrue("exportCategoryBundle returns true", lExportOk)
+    assertTrue("bundle file exists on disk", fexists(cTestBundleFile))
+    cBundleText = read(cTestBundleFile)
+    assertTrue("bundle file contains xlsxlib", substr(cBundleText, "xlsxlib") > 0)
+    assertTrue("bundle file contains docxlib", substr(cBundleText, "docxlib") > 0)
+    remove(cTestBundleFile)
 
     # Cleanup test artifacts
     deleteFolder("./tests/test_tmp")

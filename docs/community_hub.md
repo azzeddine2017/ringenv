@@ -101,3 +101,82 @@ ringenv hub install 1
 ```
 
 This automatically routes the installation to the active environment's `ringpm`, ensuring that your global Ring installation remains completely untouched.
+
+---
+
+## 5. Categories & Domain Browsing
+
+`ringenv` categorizes packages into specialized technical domains (Data & Documents, Web, GUI, Database, Game Dev, AI & Science, Security, Build & Packaging, System Utilities).
+
+### Listing All Categories
+```bash
+ringenv hub categories
+```
+
+### Filtering Packages by Category
+```bash
+# Data & Documents (xlsxlib, docxlib, pdflib, simplejson, yaml, etc.)
+ringenv hub --category data
+# Or shorthand:
+ringenv hub -c web
+ringenv hub -c gui
+ringenv hub -c database
+ringenv hub -c gamedev
+ringenv hub -c ai
+ringenv hub -c build   # ring2exe-plus, ring2apk, ring2exe
+```
+
+---
+
+## 6. Package Bundles & Batch Installation
+
+### Exporting Category Packages to a Bundle File
+Save all packages of a category to a requirements-style text file:
+
+```bash
+# Exports to default 'ringenv-data.txt'
+ringenv hub export data
+
+# Or export to custom filename
+ringenv hub export data my_stack.txt
+```
+
+Example file output (`my_stack.txt`):
+```text
+# ringenv package bundle: Data & Documents (data)
+# Description: Documents, Spreadsheets, Data Formats & Visuals
+xlsxlib
+docxlib
+pptxlib
+pdflib
+svglib
+simplejson
+yaml
+toml
+markdown
+dbflib
+ringqr
+ringbc
+ringfm
+ascii2label
+dotenv
+```
+
+### Installing Packages from a File
+Install all packages listed in a file directly into the active virtual environment:
+
+```bash
+ringenv hub install -f my_stack.txt
+# Or:
+ringenv hub install --file ringenv-data.txt
+```
+
+### Installing an Entire Category Directly
+Install all packages of a domain in a single command:
+
+```bash
+ringenv hub install -c data
+# Or:
+ringenv hub install --category web
+ringenv hub install --bundle gamedev
+```

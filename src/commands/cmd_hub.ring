@@ -114,6 +114,12 @@ func getCuratedCommunityLibs
             :site = "github.com/ysdragon/ring2apk"
         ],
         [
+            :name = "ring2exe-plus",
+            :author = "ysdragon",
+            :desc = "Enhanced Ring standalone executable compiler with icon, GUI, and auto-libs",
+            :site = "github.com/ysdragon/ring2exe-plus"
+        ],
+        [
             :name = "ring-libsql",
             :author = "ysdragon",
             :desc = "LibSQL client library for Ring with SQLite compatibility",
@@ -331,29 +337,316 @@ func filterLibs aLibs, cMode
     next
     return aFiltered
 
+# Display table of all available library categories
+func showCategories
+    uiBanner("Ring Libraries Categories & Domains", "Explore Ring packages organized by specialized technical domains")
+    ? ""
+    ? "  " + uiStyle("  #", C_BOLD + C_WHITE) + "  " + uiStyle("CATEGORY", C_BOLD + C_WHITE) + "        " + uiStyle("ALIASES", C_BOLD + C_WHITE) + "               " + uiStyle("PKGS", C_BOLD + C_WHITE) + "  " + uiStyle("DESCRIPTION", C_BOLD + C_WHITE)
+    uiDivider()
+
+    aCats = getCategoriesInfo()
+    for i = 1 to len(aCats)
+        aCat = aCats[i]
+        cId = aCat[:id]
+        cDesc = aCat[:desc]
+        nPkgCount = len(aCat[:packages])
+
+        cAliases = ""
+        for k = 1 to len(aCat[:aliases])
+            if lower(aCat[:aliases][k]) != lower(cId)
+                if cAliases != ""
+                    cAliases = cAliases + ", "
+                ok
+                cAliases = cAliases + aCat[:aliases][k]
+            ok
+        next
+
+        cPaddedIdx = "" + i
+        if len(cPaddedIdx) = 1
+            cPaddedIdx = "  " + cPaddedIdx
+        but len(cPaddedIdx) = 2
+            cPaddedIdx = " " + cPaddedIdx
+        ok
+
+        cPaddedId = cId
+        while len(cPaddedId) < 16
+            cPaddedId = cPaddedId + " "
+        end
+
+        cPaddedAliases = cAliases
+        while len(cPaddedAliases) < 22
+            cPaddedAliases = cPaddedAliases + " "
+        end
+
+        cPaddedCount = "" + nPkgCount
+        while len(cPaddedCount) < 5
+            cPaddedCount = " " + cPaddedCount
+        end
+
+        ? "  " + uiStyle(cPaddedIdx, C_BYELLOW) + "  " + uiStyle(cPaddedId, C_BOLD + C_BCYAN) + " " + uiStyle(cPaddedAliases, C_DIM) + " " + uiStyle(cPaddedCount, C_BOLD + C_BGREEN) + "  " + uiStyle(cDesc, C_WHITE)
+    next
+
+    uiDivider()
+    ? "  " + uiInfo("Total: " + len(aCats) + " domains. Use 'ringenv hub --category <name>' to explore.")
+    ? ""
+    ? "  " + uiStyle("Usage Commands:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("ringenv hub --category <cat>", C_BOLD + C_BCYAN) + "     Filter packages by category (e.g. data, web)"
+    ? "    " + uiStyle("ringenv hub export <cat> [file]", C_BOLD + C_BCYAN) + "  Save category packages list to a file"
+    ? "    " + uiStyle("ringenv hub install -f <file>", C_BOLD + C_BCYAN) + "    Install all packages listed in a file"
+    ? "    " + uiStyle("ringenv hub install -c <cat>", C_BOLD + C_BCYAN) + "     Install all packages in a category"
+    ? uiStyle("======================================================================", C_CYAN)
+    return true
+
+# Display libraries belonging to a specific category
+func showCategoryLibs cCatInput
+    aCat = getCategoryById(cCatInput)
+    if len(aCat) = 0
+        ? uiError("Error: Unknown category '" + cCatInput + "'.")
+        ? "Run " + uiStyle("ringenv hub categories", C_BOLD + C_BYELLOW) + " to view all available categories."
+        return false
+    ok
+
+    aAllLibs = fetchRegistryLibs()
+    aCategoryLibs = []
+
+    for aLib in aAllLibs
+        if isPackageInCategory(aLib[:name], aCat[:id])
+            aCategoryLibs + aLib
+        ok
+    next
+
+    uiBanner("Ring Hub Category: " + aCat[:name] + " (" + aCat[:id] + ")", aCat[:desc])
+    ? "  " + uiStyle("Source: ", C_DIM) + uiStyle(cHubRegistrySource, C_BOLD + C_BYELLOW)
+    ? ""
+
+    ? "  " + uiStyle("  #", C_BOLD + C_WHITE) + "  " + uiStyle("PACKAGE", C_BOLD + C_WHITE) + "              " + uiStyle("AUTHOR", C_BOLD + C_WHITE) + "           " + uiStyle("DESCRIPTION", C_BOLD + C_WHITE)
+    uiDivider()
+
+    for i = 1 to len(aCategoryLibs)
+        aLib = aCategoryLibs[i]
+        cName = aLib[:name]
+        cAuthor = aLib[:author]
+        cDesc = aLib[:desc]
+
+        cPaddedIdx = "" + i
+        if len(cPaddedIdx) = 1
+            cPaddedIdx = "  " + cPaddedIdx
+        but len(cPaddedIdx) = 2
+            cPaddedIdx = " " + cPaddedIdx
+        ok
+
+        cPaddedName = cName
+        while len(cPaddedName) < 20
+            cPaddedName = cPaddedName + " "
+        end
+
+        cPaddedAuthor = "@" + cAuthor
+        while len(cPaddedAuthor) < 16
+            cPaddedAuthor = cPaddedAuthor + " "
+        end
+
+        if len(cDesc) > 50
+            cDesc = substr(cDesc, 1, 47) + "..."
+        ok
+
+        ? "  " + uiStyle(cPaddedIdx, C_BYELLOW) + "  " + uiStyle(cPaddedName, C_BOLD + C_BCYAN) + " " + uiAuthor(cPaddedAuthor) + " " + uiStyle(cDesc, C_DIM)
+    next
+
+    uiDivider()
+    ? "  " + uiInfo("Showing " + len(aCategoryLibs) + " packages in category '" + aCat[:id] + "'.")
+    ? ""
+    ? "  " + uiStyle("Usage Commands:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("ringenv hub install <# or name>", C_BOLD + C_BCYAN) + "       Install single library"
+    ? "    " + uiStyle("ringenv hub install -c " + aCat[:id], C_BOLD + C_BCYAN) + "            Install all packages in this category"
+    ? "    " + uiStyle("ringenv hub export " + aCat[:id] + " [file]", C_BOLD + C_BCYAN) + "      Export package list to a bundle file"
+    ? "    " + uiStyle("ringenv hub categories", C_DIM) + "                   View all available categories"
+    ? uiStyle("======================================================================", C_CYAN)
+    return true
+
+# Export category packages list to a file
+func exportCategoryBundle cCatInput, cFilePath
+    aCat = getCategoryById(cCatInput)
+    if len(aCat) = 0
+        ? uiError("Error: Unknown category '" + cCatInput + "'.")
+        ? "Run " + uiStyle("ringenv hub categories", C_BOLD + C_BYELLOW) + " to view available categories."
+        return false
+    ok
+
+    cCatId = aCat[:id]
+    if cFilePath = ""
+        cFilePath = "ringenv-" + cCatId + ".txt"
+    ok
+
+    cTargetPath = resolveCallerPath(cFilePath)
+
+    cContent = "# ringenv package bundle: " + aCat[:name] + " (" + cCatId + ")" + nl
+    cContent = cContent + "# Description: " + aCat[:desc] + nl
+    cContent = cContent + "# Install all packages with: ringenv hub install -f " + cFilePath + nl + nl
+
+    for cPkg in aCat[:packages]
+        cContent = cContent + cPkg + nl
+    next
+
+    write(cTargetPath, cContent)
+    if fexists(cTargetPath)
+        ? ""
+        ? uiSuccess("Successfully exported " + len(aCat[:packages]) + " packages to bundle file:")
+        ? "  " + uiStyle(toNativePath(cTargetPath), C_BOLD + C_BYELLOW)
+        ? ""
+        ? "  " + uiStyle("To install all packages in this bundle, run:", C_BOLD + C_WHITE)
+        ? "    " + uiStyle("ringenv hub install -f " + cFilePath, C_BOLD + C_BCYAN)
+        ? uiStyle("======================================================================", C_CYAN)
+        return true
+    else
+        ? uiError("Error: Could not write bundle file to: " + cTargetPath)
+        return false
+    ok
+
+# Install all packages listed in a file
+func installBundleFromFile cFilePath
+    if cFilePath = ""
+        ? uiError("Error: Missing file path for bundle installation.")
+        ? "Usage: ringenv hub install -f <filename>"
+        return false
+    ok
+
+    cTargetPath = resolveCallerPath(cFilePath)
+    if not fexists(cTargetPath)
+        ? uiError("Error: Bundle file not found: " + toNativePath(cTargetPath))
+        return false
+    ok
+
+    cContent = read(cTargetPath)
+    aLines = split(cContent, nl)
+    aPackages = []
+
+    for cRawLine in aLines
+        cLine = trim(cRawLine)
+        cLine = substr(cLine, char(13), "")
+        cLine = trim(cLine)
+
+        if cLine = "" or substr(cLine, 1, 1) = "#" or substr(cLine, 1, 2) = "//"
+            loop
+        ok
+
+        aTokens = split(cLine, " ")
+        if len(aTokens) > 0 and aTokens[1] != ""
+            cPkg = trim(aTokens[1])
+            if find(aPackages, cPkg) = 0
+                aPackages + cPkg
+            ok
+        ok
+    next
+
+    if len(aPackages) = 0
+        ? uiWarning("No valid package names found in bundle file: " + cFilePath)
+        return false
+    ok
+
+    uiBanner("Installing Package Bundle", "Source: " + toNativePath(cTargetPath))
+    ? ""
+    ? "  " + uiStyle("Total Packages to Install: ", C_BOLD + C_WHITE) + uiStyle("" + len(aPackages), C_BOLD + C_BGREEN)
+    ? ""
+
+    nSuccess = 0
+    nFailed = 0
+
+    for i = 1 to len(aPackages)
+        cPkg = aPackages[i]
+        ? "  " + uiStyle("[" + i + "/" + len(aPackages) + "] ", C_BOLD + C_BYELLOW) + uiStyle("Installing " + cPkg + "...", C_BOLD + C_WHITE)
+        lOk = installCommunityLib(cPkg)
+        if lOk
+            nSuccess = nSuccess + 1
+        else
+            nFailed = nFailed + 1
+        ok
+        ? ""
+    next
+
+    uiBanner("Bundle Installation Complete", "" + nSuccess + " packages processed")
+    return true
+
+# Install all packages in a category directly
+func installBundleByCategory cCatInput
+    aCat = getCategoryById(cCatInput)
+    if len(aCat) = 0
+        ? uiError("Error: Unknown category '" + cCatInput + "'.")
+        ? "Run " + uiStyle("ringenv hub categories", C_BOLD + C_BYELLOW) + " to view available categories."
+        return false
+    ok
+
+    uiBanner("Installing Category Bundle: " + aCat[:name], "" + len(aCat[:packages]) + " packages in domain '" + aCat[:id] + "'")
+    ? ""
+
+    nSuccess = 0
+    nFailed = 0
+
+    for i = 1 to len(aCat[:packages])
+        cPkg = aCat[:packages][i]
+        ? "  " + uiStyle("[" + i + "/" + len(aCat[:packages]) + "] ", C_BOLD + C_BYELLOW) + uiStyle("Installing " + cPkg + "...", C_BOLD + C_WHITE)
+        lOk = installCommunityLib(cPkg)
+        if lOk
+            nSuccess = nSuccess + 1
+        else
+            nFailed = nFailed + 1
+        ok
+        ? ""
+    next
+
+    uiBanner("Category Installation Complete", "" + nSuccess + " packages processed")
+    return true
+
 # Display list of community libraries and packages
 func cmdHub aArgs
     cMode = "community"
     cSubCmd = ""
     cQuery = ""
+    cCategory = ""
+    cInstallFile = ""
+    cInstallBundle = ""
 
-    # Parse flags
-    for cArg in aArgs
+    # Parse flags across arguments
+    nArgLen = len(aArgs)
+    for i = 1 to nArgLen
+        cArg = aArgs[i]
         cLowerArg = lower(cArg)
+
         if cLowerArg = "--all" or cLowerArg = "-a"
             cMode = "all"
         but cLowerArg = "--official" or cLowerArg = "-o"
             cMode = "official"
+        but cLowerArg = "--category" or cLowerArg = "-c"
+            if i < nArgLen
+                cCategory = aArgs[i + 1]
+            ok
+        but cLowerArg = "--file" or cLowerArg = "-f"
+            if i < nArgLen
+                cInstallFile = aArgs[i + 1]
+            ok
+        but cLowerArg = "--bundle"
+            if i < nArgLen
+                cInstallBundle = aArgs[i + 1]
+            ok
         ok
     next
 
-    # Filter out flags from arguments
+    # Filter out parsed flags and their parameters from positional arguments
     aFiltered = []
-    for cArg in aArgs
-        cLowerArg = lower(cArg)
-        if cLowerArg != "--all" and cLowerArg != "-a" and cLowerArg != "--official" and cLowerArg != "-o" and cLowerArg != "--no-color"
-            aFiltered + cArg
+    nSkipNext = false
+    for i = 1 to nArgLen
+        if nSkipNext
+            nSkipNext = false
+            loop
         ok
+        cArg = aArgs[i]
+        cLowerArg = lower(cArg)
+        if cLowerArg = "--all" or cLowerArg = "-a" or cLowerArg = "--official" or cLowerArg = "-o" or cLowerArg = "--no-color"
+            loop
+        but cLowerArg = "--category" or cLowerArg = "-c" or cLowerArg = "--file" or cLowerArg = "-f" or cLowerArg = "--bundle"
+            nSkipNext = true
+            loop
+        ok
+        aFiltered + cArg
     next
 
     if len(aFiltered) >= 2
@@ -372,6 +665,39 @@ func cmdHub aArgs
         cSubCmd = ""
     ok
 
+    # Handle categories list
+    if cSubCmd = "categories" or cSubCmd = "--categories" or cSubCmd = "-cats"
+        return showCategories()
+    ok
+
+    # Handle category view via subcommand: 'ringenv hub category <name>'
+    if cSubCmd = "category"
+        if cQuery = ""
+            return showCategories()
+        ok
+        return showCategoryLibs(cQuery)
+    ok
+
+    # Handle category view via flag: 'ringenv hub --category <name>'
+    if cCategory != "" and cSubCmd != "install" and cSubCmd != "add" and cSubCmd != "export"
+        return showCategoryLibs(cCategory)
+    ok
+
+    # Handle export command: 'ringenv hub export <category> [filepath]'
+    if cSubCmd = "export"
+        if cQuery = ""
+            ? uiError("Error: Missing category name to export.")
+            ? "Usage: ringenv hub export <category> [filename]"
+            ? "Example: ringenv hub export data my_data_stack.txt"
+            return false
+        ok
+        cExportFile = ""
+        if len(aFiltered) >= 4
+            cExportFile = aFiltered[4]
+        ok
+        return exportCategoryBundle(cQuery, cExportFile)
+    ok
+
     # Handle info command
     if cSubCmd = "info"
         if cQuery = ""
@@ -384,9 +710,26 @@ func cmdHub aArgs
 
     # Handle install command
     if cSubCmd = "install" or cSubCmd = "add"
+        # Option A: Install from bundle file (-f / --file)
+        if cInstallFile != ""
+            return installBundleFromFile(cInstallFile)
+        ok
+
+        # Option B: Install whole category (-c / --category / --bundle)
+        if cInstallBundle != ""
+            return installBundleByCategory(cInstallBundle)
+        ok
+        if cCategory != ""
+            return installBundleByCategory(cCategory)
+        ok
+
+        # Option C: Install single package
         if cQuery = ""
-            ? uiError("Error: Missing package name or number to install.")
-            ? "Usage: ringenv hub install <# or name>"
+            ? uiError("Error: Missing package name, category, or bundle file to install.")
+            ? "Usage:"
+            ? "  ringenv hub install <# or name>      # Single package"
+            ? "  ringenv hub install -f <filename>    # From bundle file"
+            ? "  ringenv hub install -c <category>    # All packages in category"
             return false
         ok
         return installCommunityLib(cQuery)
@@ -481,6 +824,8 @@ func cmdHub aArgs
 
     ? ""
     ? "  " + uiStyle("Usage Commands:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("ringenv hub categories", C_BOLD + C_BMAGENTA) + "        List all package categories and domains"
+    ? "    " + uiStyle("ringenv hub --category <cat>", C_BOLD + C_BMAGENTA) + "  Show packages in a category (e.g. data)"
     ? "    " + uiStyle("ringenv hub install <# or name>", C_BOLD + C_BCYAN) + "   Install library by row number or name"
     ? "    " + uiStyle("ringenv hub info <# or name>", C_BOLD + C_BCYAN) + "      View library details & repository README"
     ? "    " + uiStyle("ringenv hub search <query>", C_BCYAN) + "        Search across all packages by keyword"

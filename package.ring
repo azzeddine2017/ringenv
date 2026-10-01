@@ -32,6 +32,7 @@ aPackageInfo = [
 		"bin/ringenv",
 		"src/core/ui_style.ring",
 		"src/core/os_helper.ring",
+		"src/core/categories.ring",
 		"src/core/zipengine.ring",
 		"src/core/downloader.ring",
 		"src/core/extractor.ring",

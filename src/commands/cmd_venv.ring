@@ -95,9 +95,15 @@ func copyRuntimeFiles cSrcDir, cTargetDir
     ok
 
     # Ensure required environment directories exist
-    ensureDir(cTargetDir + "/tools/ringpm")
+    ensureDir(cTargetDir + "/tools/ringpm/registry")
     ensureDir(cTargetDir + "/extensions")
     ensureDir(cTargetDir + "/libraries")
+
+    # Sync latest registry cache to virtual environment's ringpm
+    cCachedReg = getCacheDir() + "/registry.ring"
+    if fexists(cCachedReg)
+        copyFile(cCachedReg, cTargetDir + "/tools/ringpm/registry/registry.ring")
+    ok
 
     return true
 

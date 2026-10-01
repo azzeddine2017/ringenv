@@ -73,15 +73,15 @@ func getCuratedCommunityLibs
         ],
         [
             :name = "ring-cffi",
-            :author = "yousif",
+            :author = "ysdragon",
             :desc = "Foreign Function Interface (FFI) to call C dynamic libraries directly",
-            :site = "github.com/yousif/ring-cffi"
+            :site = "github.com/ysdragon/ring-cffi"
         ],
         [
             :name = "bolt",
-            :author = "yousif",
+            :author = "ysdragon",
             :desc = "Blazing-fast asynchronous HTTP web framework for Ring backend services",
-            :site = "github.com/yousif/bolt"
+            :site = "github.com/ysdragon/bolt"
         ],
         [
             :name = "dbflib",
@@ -91,27 +91,39 @@ func getCuratedCommunityLibs
         ],
         [
             :name = "ringquantum",
-            :author = "ringpackages",
+            :author = "Azzeddine2017",
             :desc = "Quantum computing algorithms and circuit simulator for Ring",
-            :site = "github.com/ringpackages/ringquantum"
+            :site = "github.com/Azzeddine2017/ringquantum"
         ],
         [
             :name = "ringscript",
-            :author = "ringpackages",
+            :author = "mayouni",
             :desc = "Run Ring programs and virtual machine inside web browsers",
-            :site = "github.com/ringpackages/ringscript"
+            :site = "github.com/mayouni/ringscript"
         ],
         [
             :name = "ringserv",
-            :author = "ringpackages",
+            :author = "mayouni",
             :desc = "Modern stand-alone microservices and application server",
-            :site = "github.com/ringpackages/ringserv"
+            :site = "github.com/mayouni/ringserv"
         ],
         [
             :name = "ring2apk",
-            :author = "ringpackages",
+            :author = "ysdragon",
             :desc = "Build Android APK packages directly from Ring applications",
-            :site = "github.com/ringpackages/ring2apk"
+            :site = "github.com/ysdragon/ring2apk"
+        ],
+        [
+            :name = "ring-libsql",
+            :author = "ysdragon",
+            :desc = "LibSQL client library for Ring with SQLite compatibility",
+            :site = "github.com/ysdragon/ring-libsql"
+        ],
+        [
+            :name = "ring-python",
+            :author = "ysdragon",
+            :desc = "Python language bindings and runtime bridge for Ring",
+            :site = "github.com/ysdragon/ring-python"
         ],
         [
             :name = "steamlib",
@@ -121,9 +133,9 @@ func getCuratedCommunityLibs
         ],
         [
             :name = "emoji",
-            :author = "ringpackages",
+            :author = "ringeg",
             :desc = "Lightweight Unicode emoji processing, translation, and rendering",
-            :site = "github.com/ringpackages/emoji"
+            :site = "github.com/ringeg/emoji"
         ],
         [
             :name = "ringenv",
@@ -229,12 +241,14 @@ func parseRemoteRegistry cContent
                 cAuthor = "ringpackages"
             ok
 
-            # Enrich author and description from curated community list if known
+            # Enrich author and description from curated community list if missing or default
             aCurated = getCuratedCommunityLibs()
             for aCur in aCurated
                 if lower(aCur[:name]) = lower(cName)
-                    cAuthor = aCur[:author]
-                    if aCur[:desc] != ""
+                    if cAuthor = "ringpackages" or cAuthor = ""
+                        cAuthor = aCur[:author]
+                    ok
+                    if aCur[:desc] != "" and cDesc = ""
                         cDesc = aCur[:desc]
                     ok
                     exit
@@ -718,6 +732,13 @@ func installCommunityLib cIdOrName
 
     cName = aLib[:name]
     cAuthor = aLib[:author]
+
+    # Sync cached registry to active ringpm if present
+    cCachedReg = getCacheDir() + "/registry.ring"
+    cEnvReg = exefolder() + "/../tools/ringpm/registry/registry.ring"
+    if fexists(cCachedReg) and direxists(exefolder() + "/../tools/ringpm/registry")
+        copyFile(cCachedReg, cEnvReg)
+    ok
 
     uiBanner("Installing Package", cName + " by @" + cAuthor)
     ? ""

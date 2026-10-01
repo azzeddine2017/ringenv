@@ -113,13 +113,18 @@ func runAllTests
     aCommunityLibs = getCuratedCommunityLibs()
     assertTrue("Community hub contains curated external libraries", len(aCommunityLibs) >= 10)
     lHasXlsx = false
+    lHasQuantum = false
     for aLib in aCommunityLibs
         if aLib[:name] = "xlsxlib"
             lHasXlsx = true
             assertEqual("xlsxlib author is Azzeddine2017", aLib[:author], "Azzeddine2017")
+        but aLib[:name] = "ringquantum"
+            lHasQuantum = true
+            assertEqual("ringquantum author is Azzeddine2017", aLib[:author], "Azzeddine2017")
         ok
     next
     assertTrue("Community hub includes xlsxlib", lHasXlsx)
+    assertTrue("Community hub includes ringquantum", lHasQuantum)
 
     # Test 13: Registry block field extractor
     cSampleBlock = ':name = "testlib", :description = "Test Description", :ProviderUserName = "TestDev"'

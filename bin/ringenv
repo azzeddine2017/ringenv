@@ -17,10 +17,12 @@ else
     exit 1
 fi
 
+# Save and isolate RINGPATH so virtual environments don't break ringenv itself
 _SAVED_RINGPATH="$RINGPATH"
 if [ -f "$SCRIPT_DIR/ring" ]; then
     RING_BIN="$SCRIPT_DIR/ring"
-    export RINGPATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+    export HOST_RING_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+    export RINGPATH="$HOST_RING_DIR"
 else
     RING_BIN="ring"
 fi
@@ -30,6 +32,7 @@ cd "$RINGENV_DIR"
 EXIT_CODE=$?
 cd "$RINGENV_CALLER_DIR"
 
+# Restore caller RINGPATH
 export RINGPATH="$_SAVED_RINGPATH"
 
 exit $EXIT_CODE

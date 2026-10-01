@@ -1,0 +1,20 @@
+# Auto detect text files and normalise line endings
+* text=auto
+
+# Force LF for shell scripts (critical for Linux/macOS)
+*.sh text eol=lf
+bin/ringenv text eol=lf
+
+# Force CRLF for Windows batch files
+*.bat text eol=crlf
+
+# Ring source files - auto
+*.ring text=auto
+
+# Binary files
+*.dll binary
+*.so binary
+*.dylib binary
+*.exe binary
+*.zip binary
+*.tar.gz binary

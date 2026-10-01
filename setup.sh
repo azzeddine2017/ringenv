@@ -33,6 +33,7 @@ cp "$SCRIPT_DIR/docs/"*.md "$TARGET_PKG/docs/"
 
 cp "$SCRIPT_DIR/bin/ringenv" "$RING_BIN/ringenv"
 chmod +x "$RING_BIN/ringenv"
+chmod +x "$TARGET_PKG/bin/ringenv"
 
 echo "================================================="
 echo "ringenv successfully installed!"

@@ -8,6 +8,8 @@ load "../src/core/ui_style.ring"
 load "../src/commands/cmd_list.ring"
 load "../src/commands/cmd_venv.ring"
 load "../src/commands/cmd_hub.ring"
+load "../src/commands/cmd_build.ring"
+load "../src/commands/cmd_harvest.ring"
 
 nPassed = 0
 nFailed = 0
@@ -200,9 +202,41 @@ func runAllTests
     assertTrue("bundle file contains docxlib", substr(cBundleText, "docxlib") > 0)
     remove(cTestBundleFile)
 
+    # Test 20: parseConfigFile functionality
+    cTestConf = "./tests/test_tmp/test_ring2exe.conf"
+    ensureDir("./tests/test_tmp")
+    cSampleConf = "# Sample config" + nl +
+                  "source = src/main.ring" + nl +
+                  'output = "TestApp"' + nl +
+                  "gui = true" + nl +
+                  "auto-libs = true" + nl +
+                  "release = true" + nl
+    write(cTestConf, cSampleConf)
+    aParsed = parseConfigFile(cTestConf)
+    assertEqual("parseConfigFile parses source", aParsed["source"], "src/main.ring")
+    assertEqual("parseConfigFile strips quotes from output", aParsed["output"], "TestApp")
+    assertEqual("parseConfigFile parses gui", aParsed["gui"], "true")
+    assertEqual("parseConfigFile parses auto-libs", aParsed["auto-libs"], "true")
+    assertEqual("parseConfigFile parses release", aParsed["release"], "true")
+
+    # Test 21: Scaffold generator verification
+    lScaffoldOk = buildScaffold("desktop")
+    assertTrue("buildScaffold desktop returns true", lScaffoldOk)
+    assertTrue("ring2exe.conf created", fexists("ring2exe.conf"))
+    assertTrue("scripts/build_desktop.bat created", fexists("scripts/build_desktop.bat"))
+    assertTrue("scripts/build_desktop.sh created", fexists("scripts/build_desktop.sh"))
+
+    # Test 22: Host Ring discovery and harvest catalog
+    cHost = getHostRingDir()
+    assertTrue("getHostRingDir locates a Ring installation", len(cHost) > 0)
+    assertTrue("harvestList returns true with valid catalog", harvestList())
+
     # Cleanup test artifacts
     deleteFolder("./tests/test_tmp")
     assertTrue("deleteFolder removes directory recursively", not direxists("./tests/test_tmp"))
+    if fexists("scripts/build_desktop.bat") remove("scripts/build_desktop.bat") ok
+    if fexists("scripts/build_desktop.sh") remove("scripts/build_desktop.sh") ok
+    if direxists("scripts") deleteFolder("scripts") ok
 
     ? "================================================="
     ? "Test Results: " + nPassed + " passed, " + nFailed + " failed."

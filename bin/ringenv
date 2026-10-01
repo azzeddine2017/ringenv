@@ -17,9 +17,19 @@ else
     exit 1
 fi
 
+_SAVED_RINGPATH="$RINGPATH"
+if [ -f "$SCRIPT_DIR/ring" ]; then
+    RING_BIN="$SCRIPT_DIR/ring"
+    export RINGPATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+    RING_BIN="ring"
+fi
+
 cd "$RINGENV_DIR"
-ring main.ring "$@"
+"$RING_BIN" main.ring "$@"
 EXIT_CODE=$?
 cd "$RINGENV_CALLER_DIR"
+
+export RINGPATH="$_SAVED_RINGPATH"
 
 exit $EXIT_CODE

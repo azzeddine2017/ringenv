@@ -343,6 +343,18 @@ func cmdVenv aArgs
     cTarget = resolveCallerPath(cTargetFolder)
     cEnvName = getBaseName(cTarget)
 
+    # Prevent modifying/clearing currently active virtual environment
+    cActiveVenv = sysget("RVENV_DIR")
+    if cActiveVenv != ""
+        cNormActive = lower(normalizePath(cActiveVenv))
+        cNormTarget = lower(normalizePath(cTarget))
+        if cNormActive = cNormTarget
+            ? uiError("The virtual environment '" + cEnvName + "' is currently active in this terminal!")
+            ? "  " + uiStyle("Please run 'deactivate' before clearing or recreating this environment.", C_BOLD + C_YELLOW)
+            return false
+        ok
+    ok
+
     # Clear existing environment if requested
     if lClear and direxists(cTarget)
         ? uiWarn("Clearing existing virtual environment at: " + toNativePath(cTarget))

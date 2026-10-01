@@ -282,6 +282,32 @@ When activated:
 
 ---
 
+## Project Lifecycle & Packaging (`build` & `scaffold`)
+
+`ringenv` manages the complete application lifecycle, from development to standalone packaging for desktop and mobile devices:
+
+```bash
+# Compile standalone desktop executable package (powered by ring2exe-plus)
+ringenv build desktop
+
+# Build standalone Android APK package (powered by ring2apk)
+ringenv build apk
+
+# Configure and verify Android SDK, NDK, and JDK toolchains
+ringenv build setup-android
+# or:
+ringenv setup android
+
+# Generate starter configuration files and cross-platform build scripts (.bat & .sh)
+ringenv scaffold all
+ringenv scaffold desktop
+ringenv scaffold apk
+```
+
+See the [Packaging and Distribution Guide](docs/packaging_and_distribution.md) for complete details.
+
+---
+
 ## Documentation
 
 Comprehensive guides and technical documentation are available in the [docs/](docs/README.md) directory:

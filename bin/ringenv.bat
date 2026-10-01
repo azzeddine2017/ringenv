@@ -19,10 +19,28 @@ if exist "%~dp0..\tools\ringpm\packages\ringenv\main.ring" (
     exit /b 1
 )
 
+rem Locate host Ring compiler binary
+if exist "%~dp0ring.exe" (
+    set "RING_EXE=%~dp0ring.exe"
+    set "HOST_RING_DIR=%~dp0.."
+) else (
+    set "RING_EXE=ring"
+    set "HOST_RING_DIR="
+)
+
+rem Temporarily isolate RINGPATH to host Ring so virtual environments don't break ringenv itself
+set "_SAVED_RINGPATH=%RINGPATH%"
+if defined HOST_RING_DIR (
+    set "RINGPATH=%HOST_RING_DIR%"
+)
+
 rem Switch to ringenv directory so Ring can load relative modules, then restore caller directory
 pushd "%RINGENV_DIR%"
-ring main.ring %*
+"%RING_EXE%" main.ring %*
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
+
+rem Restore caller RINGPATH
+set "RINGPATH=%_SAVED_RINGPATH%"
 
 exit /b %EXIT_CODE%

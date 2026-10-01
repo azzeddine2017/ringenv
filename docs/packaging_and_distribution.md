@@ -125,13 +125,18 @@ release = true
 keep = false
 ```
 
-### 3.2. Manual Compilation Commands
+### 3.2. Building Desktop Executables
+
+You can build the desktop package directly using `ringenv`, which manages the compilation, staging, and runtime bundling automatically:
 
 ```bash
-# When ring2exe.conf is present in the working directory:
-ring2exe
+# Automated cross-platform build via ringenv (Recommended):
+ringenv build desktop
 
-# Or specify options explicitly via CLI:
+# Or generate standalone scripts and ring2exe.conf:
+ringenv scaffold desktop
+
+# Or manual compilation with ring2exe-plus:
 ring2exe src/main.ring -gui -auto-libs -icon=assets/logo.ico -output=MyApp -release
 ```
 
@@ -270,14 +275,22 @@ Ring2ApkConfig = [
 
 ### 4.3. Building the APK
 
-Run the build command from the folder containing `ring2apk.ring`:
+You can build the Android APK directly using `ringenv`:
 
 ```bash
-# Using installed ring2apk tool:
-ring2apk build --rebuild
+# Automated APK build via ringenv (stages ring/ and assets/ automatically):
+ringenv build apk
 
-# Or running directly via Ring interpreter:
-ring ring2apk.ring build --rebuild
+# Generate standalone Android scripts and ring2apk.ring:
+ringenv scaffold apk
+
+# Launch interactive Android SDK/NDK/JDK toolchain setup:
+ringenv build setup-android
+# or:
+ringenv setup android
+
+# Or manual compilation with ring2apk:
+ring2apk build --rebuild
 ```
 
 The compiled APK will be output to `build/outputs/apk/debug/` or `build/outputs/apk/release/`.

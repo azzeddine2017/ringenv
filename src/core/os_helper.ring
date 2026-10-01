@@ -80,6 +80,14 @@ func resolveCallerPath cPath
 
     return cNorm
 
+# Get caller working directory
+func getCallerDir
+    cCallerDir = sysget("RINGENV_CALLER_DIR")
+    if cCallerDir != ""
+        return normalizePath(cCallerDir)
+    ok
+    return normalizePath(currentdir())
+
 # Get root ringenv global directory (~/.ringenv)
 func getRingenvDir
     return getHomeDir() + "/.ringenv"
@@ -149,12 +157,30 @@ func copyFile cSrc, cDest
     if cContent = "" and not fexists(cSrc)
         return false
     ok
-    write(cDest, cContent)
+    try
+        write(cDest, cContent)
+    catch
+        cNativeSrc = toNativePath(cSrc)
+        cNativeDest = toNativePath(cDest)
+        if iswindows()
+            system('cmd /c copy /Y "' + cNativeSrc + '" "' + cNativeDest + '" >nul 2>&1')
+        else
+            system('cp -f "' + cSrc + '" "' + cDest + '" 2>/dev/null')
+        ok
+    done
     return fexists(cDest)
 
 # Copy a directory recursively
 func copyFolder cSrc, cDest
     ensureDir(cDest)
+    if iswindows()
+        cNativeSrc = toNativePath(cSrc)
+        cNativeDest = toNativePath(cDest)
+        system('cmd /c xcopy /E /I /Y /Q "' + cNativeSrc + '\*" "' + cNativeDest + '\" >nul 2>&1')
+    else
+        system('cp -R "' + cSrc + '/"* "' + cDest + '/" 2>/dev/null')
+    ok
+
     aItems = dir(cSrc)
     for aItem in aItems
         cName = aItem[1]
@@ -165,9 +191,13 @@ func copyFolder cSrc, cDest
         cSrcPath = cSrc + "/" + cName
         cDestPath = cDest + "/" + cName
         if nType = 1
-            copyFolder(cSrcPath, cDestPath)
+            if not direxists(cDestPath)
+                copyFolder(cSrcPath, cDestPath)
+            ok
         else
-            copyFile(cSrcPath, cDestPath)
+            if not fexists(cDestPath)
+                copyFile(cSrcPath, cDestPath)
+            ok
             if not iswindows()
                 if substr(cDestPath, "/bin/") > 0 or cName = "ring"
                     system('chmod +x "' + cDestPath + '" 2>/dev/null')

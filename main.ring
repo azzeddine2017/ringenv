@@ -16,10 +16,18 @@ load "src/commands/cmd_list.ring"
 load "src/commands/cmd_list_remote.ring"
 load "src/commands/cmd_hub.ring"
 load "src/commands/cmd_venv.ring"
+load "src/commands/cmd_build.ring"
+load "src/commands/cmd_harvest.ring"
 
 cVersion = "1.0.2"
 
 func main
+    # Switch working directory to caller's directory
+    cCaller = getCallerDir()
+    if cCaller != "" and direxists(cCaller)
+        chdir(cCaller)
+    ok
+
     aArgs = parseCliArgs()
 
     # Check for --no-color flag across arguments
@@ -124,6 +132,30 @@ func main
             next
             cmdVenv(aVenvArgs)
 
+        on "build"
+            cmdBuild(aArgs)
+
+        on "scaffold"
+            aScaffoldArgs = ["build", "scaffold"]
+            for i = 2 to len(aArgs)
+                aScaffoldArgs + aArgs[i]
+            next
+            cmdBuild(aScaffoldArgs)
+
+        on "setup"
+            if len(aArgs) >= 2 and (lower(aArgs[2]) = "android" or lower(aArgs[2]) = "apk")
+                buildSetupAndroid()
+            else
+                ? uiError("Missing setup target.")
+                ? "Usage: ringenv setup android"
+            ok
+
+        on "harvest"
+            cmdHarvest(aArgs)
+
+        on "vendor"
+            cmdHarvest(aArgs)
+
         other
             ? uiError("Unknown command: " + cCommand)
             ? "Run " + uiStyle("ringenv help", C_BOLD + C_BYELLOW) + " to view available commands."
@@ -192,6 +224,17 @@ func showHelp
     ? "    " + uiStyle("hub search <query>", C_BOLD + C_BMAGENTA) + "       Search across all packages by keyword"
     ? "    " + uiStyle("hub info <# or name>", C_BOLD + C_BMAGENTA) + "     Show library details and repository README"
     ? "    " + uiStyle("hub install <# or name>", C_BOLD + C_BMAGENTA) + "  Install library by row number or name"
+    ? ""
+    ? "  " + uiStyle("Project Lifecycle & Packaging:", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("build desktop / exe", C_BOLD + C_BGREEN) + "        Build desktop standalone executable (-gui, -auto-libs)"
+    ? "    " + uiStyle("build apk / android", C_BOLD + C_BGREEN) + "        Build Android APK package with ring2apk"
+    ? "    " + uiStyle("build setup-android", C_BOLD + C_BGREEN) + "        Configure Android SDK, NDK, and JDK toolchains"
+    ? "    " + uiStyle("scaffold [desktop|apk]", C_BOLD + C_BGREEN) + "     Generate build configs & scripts (.bat & .sh)"
+    ? ""
+    ? "  " + uiStyle("Global Library Harvester (Full Install):", C_BOLD + C_WHITE)
+    ? "    " + uiStyle("harvest <lib_name>", C_BOLD + C_BYELLOW) + "           Import full-install library/GUI into active venv"
+    ? "    " + uiStyle("harvest -f <file>", C_BOLD + C_BYELLOW) + "            Import all libraries listed in a manifest file"
+    ? "    " + uiStyle("harvest list", C_BOLD + C_BYELLOW) + "                 List all harvestable libraries from host Ring"
     ? ""
     ? "  " + uiStyle("General Commands:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("version", C_BOLD + C_BCYAN) + "                 Display ringenv version and platform info"

@@ -42,6 +42,7 @@ aPackageInfo = [
 		"src/commands/cmd_list_remote.ring",
 		"src/commands/cmd_hub.ring",
 		"src/commands/cmd_venv.ring",
+		"src/commands/cmd_build.ring",
 		"tests/test_ringenv.ring",
 		"docs/README.md",
 		"docs/getting_started.md",

@@ -2,7 +2,6 @@
 # Production Project Lifecycle Management for Desktop (ring2exe-plus) & Mobile (ring2apk)
 
 load "stdlibcore.ring"
-load "cmd_harvest.ring"
 
 # Main entry point for 'ringenv build' command
 func cmdBuild aArgs

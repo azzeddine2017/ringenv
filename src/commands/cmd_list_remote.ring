@@ -51,7 +51,7 @@ func fetchRemoteReleases
     hCurl = curl_easy_init()
     if ispointer(hCurl)
         curl_easy_setopt(hCurl, CURLOPT_URL, cApiUrl)
-        curl_easy_setopt(hCurl, CURLOPT_USERAGENT, "ringenv/1.0")
+        curl_easy_setopt(hCurl, CURLOPT_USERAGENT, "ringenv/" + getRingenvVersion())
         curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1)
         curl_easy_setopt(hCurl, CURLOPT_SSL_VERIFYPEER, 0)
         curl_easy_setopt(hCurl, CURLOPT_SSL_VERIFYHOST, 0)

@@ -16,6 +16,8 @@ load "src/commands/cmd_list_remote.ring"
 load "src/commands/cmd_hub.ring"
 load "src/commands/cmd_venv.ring"
 
+cVersion = "1.0.2"
+
 func main
     aArgs = parseCliArgs()
 
@@ -154,9 +156,10 @@ func parseCliArgs
     return aArgs
 
 func showVersion
-    uiBanner("ringenv v1.1.0", "Isolated Virtual Environment & Version Manager for Ring")
+    cVer = getRingenvVersion()
+    uiBanner("ringenv v" + cVer, "Isolated Virtual Environment & Version Manager for Ring")
     ? ""
-    ? "  " + uiStyle("Version:  ", C_BOLD + C_WHITE) + uiStyle("1.1.0", C_BOLD + C_BGREEN)
+    ? "  " + uiStyle("Version:  ", C_BOLD + C_WHITE) + uiStyle(cVer, C_BOLD + C_BGREEN)
     ? "  " + uiStyle("Platform: ", C_BOLD + C_WHITE) + uiStyle(getPlatformName(), C_BOLD + C_BYELLOW)
     ? "  " + uiStyle("Storage:  ", C_BOLD + C_WHITE) + uiStyle(toNativePath(getRingenvDir()), C_DIM)
     ? "  " + uiStyle("Author:   ", C_BOLD + C_WHITE) + uiAuthor("Azzeddine2017")
@@ -164,7 +167,7 @@ func showVersion
     ? uiStyle("======================================================================", C_CYAN)
 
 func showHelp
-    uiBanner("ringenv v1.1.0", "Isolated Virtual Environment & Version Manager for Ring")
+    uiBanner("ringenv v" + getRingenvVersion(), "Isolated Virtual Environment & Version Manager for Ring")
     ? ""
     ? "  " + uiStyle("Usage:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("ringenv <command> [arguments] [options]", C_BOLD + C_BYELLOW)

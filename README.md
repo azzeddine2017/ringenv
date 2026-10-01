@@ -282,6 +282,18 @@ When activated:
 
 ---
 
+## Documentation
+
+Comprehensive guides and technical documentation are available in the [docs/](docs/README.md) directory:
+
+- [Getting Started](docs/getting_started.md)
+- [Version Management Guide](docs/version_management.md)
+- [Virtual Environments Guide](docs/virtual_environments.md)
+- [Community Libraries Hub](docs/community_hub.md)
+- [Packaging and Distribution Guide](docs/packaging_and_distribution.md)
+
+---
+
 ## Running Tests
 
 Execute the automated test suite to verify platform detection, path resolution, directory creation, file copying, and activation script generation:

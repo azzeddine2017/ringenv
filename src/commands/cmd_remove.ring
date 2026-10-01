@@ -3,9 +3,9 @@
 
 func cmdRemove cVersion
     if cVersion = ""
-        ? "Error: Please specify the version to remove."
-        ? "Usage:   ringenv remove <version>"
-        ? "Example: ringenv remove 1.27"
+        ? uiError("Error: Please specify the version to remove.")
+        ? "Usage:   " + uiStyle("ringenv remove <version>", C_BOLD + C_BCYAN)
+        ? "Example: " + uiStyle("ringenv remove 1.27", C_BOLD + C_BYELLOW)
         return false
     ok
 
@@ -15,23 +15,21 @@ func cmdRemove cVersion
     cTargetDir = cVersionsDir + "/" + cVersion
 
     if not direxists(cTargetDir)
-        ? "Error: Ring version " + cVersion + " is not installed."
+        ? uiError("Error: Ring version " + cVersion + " is not installed.")
         ? "Run 'ringenv list' to view all installed versions."
         return false
     ok
 
-    ? "================================================="
-    ? "Removing Ring " + cVersion
-    ? "Path: " + toNativePath(cTargetDir)
-    ? "================================================="
+    uiBanner("Removing Ring " + cVersion, toNativePath(cTargetDir))
+    ? ""
 
     lSuccess = deleteFolder(cTargetDir)
 
     if lSuccess and not direxists(cTargetDir)
-        ? "Successfully removed Ring " + cVersion + "!"
+        ? "  " + uiSuccess("Successfully removed Ring " + cVersion + "!")
     else
-        ? "Warning: Could not completely delete directory: " + toNativePath(cTargetDir)
-        ? "Please ensure no processes are currently using files in this folder."
+        ? "  " + uiWarn("Warning: Could not completely delete directory: " + toNativePath(cTargetDir))
+        ? "  " + uiStyle("Please ensure no processes are currently using files in this folder.", C_DIM)
         return false
     ok
 
@@ -47,5 +45,7 @@ func cmdRemove cVersion
         next
     ok
 
-    ? "================================================="
+    ? ""
+    uiDivider()
+    ? uiStyle("======================================================================", C_CYAN)
     return true

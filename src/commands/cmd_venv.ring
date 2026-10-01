@@ -169,7 +169,7 @@ func generateActivationScripts cTargetDir, cEnvName
         ') else (' + nl +
         '    set "_OLD_RINGENV_PATH=%PATH%"' + nl +
         ')' + nl + nl +
-        'set "PATH=%RVENV_DIR%\Scripts;%RVENV_DIR%\bin;%PATH%"' + nl + nl +
+        'set "PATH=%RVENV_DIR%\bin;%RVENV_DIR%\Scripts;%PATH%"' + nl + nl +
         'if defined RINGPATH (' + nl +
         '    set "_OLD_RINGPATH=%RINGPATH%"' + nl +
         ')' + nl +
@@ -235,7 +235,7 @@ func generateActivationScripts cTargetDir, cEnvName
         '$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path' + nl +
         '$env:RVENV_DIR = (Resolve-Path (Join-Path $scriptDir "..")).Path' + nl +
         '$global:_OLD_RINGENV_PATH = $env:PATH' + nl +
-        '$env:PATH = "$env:RVENV_DIR\Scripts;$env:RVENV_DIR\bin;$env:PATH"' + nl +
+        '$env:PATH = "$env:RVENV_DIR\bin;$env:RVENV_DIR\Scripts;$env:PATH"' + nl +
         'if (Test-Path env:RINGPATH) {' + nl +
         '    $global:_OLD_RINGPATH = $env:RINGPATH' + nl +
         '}' + nl +
@@ -335,8 +335,8 @@ func cmdVenv aArgs
     cBinFile = getBinaryName()
 
     if not direxists(cVersionDir)
-        ? "Error: Ring version " + cVersion + " is not installed."
-        ? "Run 'ringenv install " + cVersion + "' to download and install it."
+        ? uiError("Error: Ring version " + cVersion + " is not installed.")
+        ? "Run '" + uiStyle("ringenv install " + cVersion, C_BOLD + C_BCYAN) + "' to download and install it."
         return false
     ok
 
@@ -345,14 +345,12 @@ func cmdVenv aArgs
 
     # Clear existing environment if requested
     if lClear and direxists(cTarget)
-        ? "Clearing existing virtual environment at: " + toNativePath(cTarget)
+        ? uiWarn("Clearing existing virtual environment at: " + toNativePath(cTarget))
         deleteFolder(cTarget)
     ok
 
-    ? "================================================="
-    ? "Creating virtual environment: " + toNativePath(cTarget)
-    ? "Using Ring version: " + cVersion
-    ? "================================================="
+    uiBanner("Creating Virtual Environment (" + cEnvName + ")", "Ring Version: " + cVersion + " | Target: " + toNativePath(cTarget))
+    ? ""
 
     # Create directory structure:
     # bin/ (or Scripts/ on Windows), lib/, packages/
@@ -365,11 +363,11 @@ func cmdVenv aArgs
     ensureDir(cTarget + "/packages")
 
     # Copy binary and runtime files
-    ? "Copying Ring runtime files..."
+    ? "  " + uiStyle("Copying runtime files:     ", C_BOLD + C_WHITE) + uiBadge("in progress", C_BYELLOW)
     copyRuntimeFiles(cVersionDir, cTarget)
 
     # Generate activation scripts
-    ? "Generating activation scripts..."
+    ? "  " + uiStyle("Generating shell scripts:  ", C_BOLD + C_WHITE) + uiBadge("ready", C_BGREEN)
     generateActivationScripts(cTarget, cEnvName)
 
     # Write environment configuration file
@@ -379,16 +377,20 @@ func cmdVenv aArgs
         "source = " + cVersionDir + nl
     write(cTarget + "/ringenv.cfg", cCfg)
 
-    ? "================================================="
-    ? "Virtual environment created successfully at: " + cTarget
     ? ""
-    ? "To activate:"
+    uiDivider()
+    ? "  " + uiSuccess("Virtual environment created successfully!")
+    ? "  " + uiStyle("Location: ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cTarget), C_DIM)
+    ? ""
+    ? "  " + uiStyle("To activate:", C_BOLD + C_WHITE)
     if iswindows()
-        ? "  CMD:        " + toNativePath(cTarget) + "\Scripts\activate.bat"
-        ? "  PowerShell: " + toNativePath(cTarget) + "\Scripts\activate.ps1"
-        ? "  Git Bash:   source " + cTarget + "/bin/activate"
+        ? "    " + uiStyle("CMD:        ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cTarget) + "\Scripts\activate.bat", C_BOLD + C_BYELLOW)
+        ? "    " + uiStyle("PowerShell: ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cTarget) + "\Scripts\activate.ps1", C_BOLD + C_BYELLOW)
+        ? "    " + uiStyle("Git Bash:   ", C_BOLD + C_WHITE) + uiStyle("source " + cTarget + "/bin/activate", C_BOLD + C_BYELLOW)
     else
-        ? "  Bash/Zsh:   source " + cTarget + "/bin/activate"
+        ? "    " + uiStyle("Bash/Zsh:   ", C_BOLD + C_WHITE) + uiStyle("source " + cTarget + "/bin/activate", C_BOLD + C_BYELLOW)
     ok
-    ? "================================================="
+    uiDivider()
+    ? "  " + uiStyle("To deactivate: ", C_BOLD + C_WHITE) + uiStyle("deactivate", C_BOLD + C_BRED)
+    ? uiStyle("======================================================================", C_CYAN)
     return true

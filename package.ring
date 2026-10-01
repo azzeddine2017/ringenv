@@ -1,3 +1,5 @@
+
+
 aPackageInfo = [
 	:name = "ringenv",
 	:description = "Isolated Virtual Environment and Version Manager for Ring Programming Language",
@@ -5,11 +7,11 @@ aPackageInfo = [
 	:developer = "Azzeddine Remmal",
 	:email = "azzeddine.remmal@gmail.com",
 	:license = "MIT License",
-	:version = "1.0.1",
-	:ringversion = "1.26",
+	:version = "1.0.2",
+	:ringversion = "1.27",
 	:versions = [
 		[
-			:version = "1.0.1",
+			:version = "1.0.2",
 			:branch = "master"
 		]
 	],
@@ -24,6 +26,8 @@ aPackageInfo = [
 		"main.ring",
 		"README.md",
 		"package.ring",
+		"setup.bat",
+		"setup.sh",
 		"bin/ringenv.bat",
 		"bin/ringenv",
 		"src/core/ui_style.ring",
@@ -38,8 +42,12 @@ aPackageInfo = [
 		"src/commands/cmd_hub.ring",
 		"src/commands/cmd_venv.ring",
 		"tests/test_ringenv.ring",
-		"setup.bat",
-		"setup.sh"
+		"docs/README.md",
+		"docs/getting_started.md",
+		"docs/version_management.md",
+		"docs/virtual_environments.md",
+		"docs/community_hub.md",
+		"docs/packaging_and_distribution.md"
 	],
 	:ringfolderfiles = [
 

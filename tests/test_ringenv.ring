@@ -1,6 +1,7 @@
 # test_ringenv.ring - Automated test suite for ringenv
 
 load "stdlibcore.ring"
+load "../package.ring"
 load "../src/core/os_helper.ring"
 load "../src/core/ui_style.ring"
 load "../src/commands/cmd_list.ring"
@@ -38,6 +39,9 @@ func runAllTests
     # Test 1: Platform detection
     cPlatform = getPlatformName()
     assertTrue("Platform detection returns known OS", cPlatform = "windows" or cPlatform = "linux" or cPlatform = "macos")
+
+    # Test 1b: Centralized version
+    assertEqual("Centralized package version matches getRingenvVersion()", getRingenvVersion(), aPackageInfo[:version])
 
     # Test 2: Binary name
     cBin = getBinaryName()

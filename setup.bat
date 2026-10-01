@@ -30,6 +30,7 @@ rem Ensure target package directories exist
 if not exist "%TARGET_PKG%\src\core" mkdir "%TARGET_PKG%\src\core"
 if not exist "%TARGET_PKG%\src\commands" mkdir "%TARGET_PKG%\src\commands"
 if not exist "%TARGET_PKG%\bin" mkdir "%TARGET_PKG%\bin"
+if not exist "%TARGET_PKG%\docs" mkdir "%TARGET_PKG%\docs"
 
 rem Copy project files
 copy /y "%~dp0main.ring" "%TARGET_PKG%\" >nul
@@ -39,6 +40,7 @@ copy /y "%~dp0src\core\*.ring" "%TARGET_PKG%\src\core\" >nul
 copy /y "%~dp0src\commands\*.ring" "%TARGET_PKG%\src\commands\" >nul
 copy /y "%~dp0bin\ringenv.bat" "%TARGET_PKG%\bin\" >nul
 copy /y "%~dp0bin\ringenv" "%TARGET_PKG%\bin\" >nul
+copy /y "%~dp0docs\*.md" "%TARGET_PKG%\docs\" >nul
 
 rem Install launcher in Ring bin directory
 copy /y "%~dp0bin\ringenv.bat" "%RING_BIN%ringenv.bat" >nul

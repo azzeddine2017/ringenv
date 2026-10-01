@@ -50,7 +50,7 @@ func downloadViaSystem cDownloadUrl, cDestPath
 
     if iswindows()
         # Attempt via curl.exe (built-in on Windows 10/11)
-        cCmd = "curl.exe -f -L -k -A " + cQ + "ringenv/1.0" + cQ + " -o " + cQ + cNativeDest + cQ + " " + cQ + cDownloadUrl + cQ
+        cCmd = "curl.exe -f -L -k -A " + cQ + "ringenv/" + getRingenvVersion() + cQ + " -o " + cQ + cNativeDest + cQ + " " + cQ + cDownloadUrl + cQ
         system(cCmd)
 
         if fexists(cDestPath)
@@ -69,7 +69,7 @@ func downloadViaSystem cDownloadUrl, cDestPath
             return true
         ok
     else
-        cCmd = "curl -f -L -A " + cQ + "ringenv/1.0" + cQ + " -o " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ + " 2>/dev/null || wget -q -O " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ
+        cCmd = "curl -f -L -A " + cQ + "ringenv/" + getRingenvVersion() + cQ + " -o " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ + " 2>/dev/null || wget -q -O " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ
         system(cCmd)
 
         if fexists(cDestPath) and getfilesize(cDestPath) > 1000
@@ -91,7 +91,7 @@ func downloadFile cDownloadUrl, cDestPath
 
     # Configure curl options
     curl_easy_setopt(hCurl, CURLOPT_URL, cDownloadUrl)
-    curl_easy_setopt(hCurl, CURLOPT_USERAGENT, "ringenv/1.0")
+    curl_easy_setopt(hCurl, CURLOPT_USERAGENT, "ringenv/" + getRingenvVersion())
     curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1)
     curl_easy_setopt(hCurl, CURLOPT_NOPROGRESS, 0)
     curl_easy_setopt(hCurl, CURLOPT_XFERINFOFUNCTION, :ringenv_download_progress)

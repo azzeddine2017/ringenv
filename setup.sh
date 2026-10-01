@@ -19,7 +19,7 @@ TARGET_PKG="$RING_ROOT/tools/ringpm/packages/ringenv"
 echo "Found Ring binary directory: $RING_BIN"
 echo "Target package directory:    $TARGET_PKG"
 
-mkdir -p "$TARGET_PKG/src/core" "$TARGET_PKG/src/commands" "$TARGET_PKG/bin"
+mkdir -p "$TARGET_PKG/src/core" "$TARGET_PKG/src/commands" "$TARGET_PKG/bin" "$TARGET_PKG/docs"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cp "$SCRIPT_DIR/main.ring" "$TARGET_PKG/"
@@ -29,6 +29,7 @@ cp "$SCRIPT_DIR/src/core/"*.ring "$TARGET_PKG/src/core/"
 cp "$SCRIPT_DIR/src/commands/"*.ring "$TARGET_PKG/src/commands/"
 cp "$SCRIPT_DIR/bin/ringenv.bat" "$TARGET_PKG/bin/"
 cp "$SCRIPT_DIR/bin/ringenv" "$TARGET_PKG/bin/"
+cp "$SCRIPT_DIR/docs/"*.md "$TARGET_PKG/docs/"
 
 cp "$SCRIPT_DIR/bin/ringenv" "$RING_BIN/ringenv"
 chmod +x "$RING_BIN/ringenv"

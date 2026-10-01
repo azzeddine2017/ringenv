@@ -1,6 +1,8 @@
 # ringenv - OS Helper Utilities
 # Cross-platform support for Windows, Linux, and macOS
 
+# Default global version (overridden by main.ring)
+cVersion = "1.0.2"
 
 # Detect operating system platform name
 func getPlatformName
@@ -206,3 +208,7 @@ func deleteFolder cFolder
     ok
 
     return not direxists(cNorm)
+
+# Get ringenv version
+func getRingenvVersion
+    return cVersion

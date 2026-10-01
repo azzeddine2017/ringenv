@@ -19,8 +19,9 @@ func getReleaseAsset cVersion, lLight
 # Execute install command
 func cmdInstall cVersion, lLight, lForce
     if cVersion = ""
-        ? "Error: Please specify the version to install."
-        ? "Example: ringenv install 1.27"
+        ? uiError("Error: Please specify the version to install.")
+        ? "Usage:   " + uiStyle("ringenv install <version>", C_BOLD + C_BCYAN)
+        ? "Example: " + uiStyle("ringenv install 1.27", C_BOLD + C_BYELLOW)
         return false
     ok
 
@@ -34,51 +35,53 @@ func cmdInstall cVersion, lLight, lForce
     # Check if already installed
     if direxists(cVersionDir)
         if lForce
-            ? "Force reinstall requested. Removing previous installation of Ring " + cVersion + "..."
+            ? uiWarn("Force reinstall requested. Removing previous installation of Ring " + cVersion + "...")
             deleteFolder(cVersionDir)
             if fexists(cCacheZip)
                 remove(cCacheZip)
             ok
         but fexists(cVersionDir + "/bin/" + cBinFile) or fexists(cVersionDir + "/" + cBinFile)
-            ? "Ring " + cVersion + " is already installed at: " + cVersionDir
-            ? "Use 'ringenv install " + cVersion + " --force' to force a fresh reinstall."
-            ? "Use 'ringenv venv create <target> --version " + cVersion + "' to create a virtual environment."
+            uiBanner("Ring " + cVersion + " Already Installed", toNativePath(cVersionDir))
+            ? ""
+            ? "  " + uiStyle("Status:  ", C_BOLD + C_WHITE) + uiBadge("ready", C_BOLD + C_BGREEN)
+            ? "  " + uiStyle("Reinstall: ", C_BOLD + C_WHITE) + uiStyle("ringenv install " + cVersion + " --force", C_BOLD + C_BYELLOW)
+            ? "  " + uiStyle("Create venv: ", C_BOLD + C_WHITE) + uiStyle("ringenv venv create <target> --version " + cVersion, C_BOLD + C_BCYAN)
+            ? uiStyle("======================================================================", C_CYAN)
             return true
         ok
     ok
 
-    ? "================================================="
-    ? "Installing Ring " + cVersion + " for " + getPlatformName()
-    ? "Asset: " + cAsset
-    ? "================================================="
+    uiBanner("Installing Ring " + cVersion, "Platform: " + getPlatformName() + " | Asset: " + cAsset)
+    ? ""
 
     # Primary download URL
     cUrl = "https://github.com/ring-lang/ring/releases/download/v" + cVersion + "/" + cAsset
-    ? "Downloading from: " + cUrl
+    ? "  " + uiStyle("Downloading: ", C_BOLD + C_WHITE) + uiStyle(cUrl, C_UNDERLINE + C_BCYAN)
 
     lSuccess = downloadFile(cUrl, cCacheZip)
 
     # Fallback without 'v' prefix in tag
     if not lSuccess
         cUrlFallback = "https://github.com/ring-lang/ring/releases/download/" + cVersion + "/" + cAsset
-        ? "Retrying download from: " + cUrlFallback
+        ? "  " + uiStyle("Retrying:    ", C_BOLD + C_WHITE) + uiStyle(cUrlFallback, C_UNDERLINE + C_BCYAN)
         lSuccess = downloadFile(cUrlFallback, cCacheZip)
     ok
 
     if not lSuccess
-        ? "Error: Failed to download Ring version " + cVersion + "."
+        ? ""
+        ? uiError("Error: Failed to download Ring version " + cVersion + ".")
         ? "Please check that the version exists on GitHub releases:"
-        ? "https://github.com/ring-lang/ring/releases"
+        ? uiStyle("https://github.com/ring-lang/ring/releases", C_UNDERLINE + C_BCYAN)
         return false
     ok
 
-    ? "Extracting archive to: " + cVersionDir
+    ? ""
+    ? "  " + uiStyle("Extracting:  ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cVersionDir), C_DIM)
     ensureDir(cVersionDir)
     extractZip(cCacheZip, cVersionDir)
 
     # Remove cached archive file
     if fexists(cCacheZip)
-        ? "Cleaning up cache: " + cCacheZip
         remove(cCacheZip)
     ok
 
@@ -90,8 +93,9 @@ func cmdInstall cVersion, lLight, lForce
         ok
     ok
 
-    ? "================================================="
-    ? "Successfully installed Ring " + cVersion + "!"
-    ? "Binary: " + cBinPath
-    ? "================================================="
+    ? ""
+    uiDivider()
+    ? "  " + uiSuccess("Successfully installed Ring " + cVersion + "!")
+    ? "  " + uiStyle("Binary: ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cBinPath), C_BOLD + C_BGREEN)
+    ? uiStyle("======================================================================", C_CYAN)
     return true

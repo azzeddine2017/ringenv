@@ -27,6 +27,12 @@ func cmdHarvest aArgs
             showHarvestHelp()
         on "list"
             harvestList()
+        on "scan"
+            harvestScan()
+        on "--scan"
+            harvestScan()
+        on "-s"
+            harvestScan()
         other
             harvestRun(aArgs)
     off
@@ -37,6 +43,7 @@ func showHarvestHelp
     ? ""
     ? "  " + uiStyle("Usage:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("ringenv harvest <library_or_extension>", C_BOLD + C_BYELLOW)
+    ? "    " + uiStyle("ringenv harvest scan", C_BOLD + C_BYELLOW)
     ? "    " + uiStyle("ringenv harvest -f <manifest_file>", C_BOLD + C_BYELLOW)
     ? "    " + uiStyle("ringenv harvest list", C_BOLD + C_BYELLOW)
     ? ""
@@ -311,6 +318,10 @@ func harvestLibrary cHost, cVenv, cLib
             copyFolder(cHost + "/extensions/ringqt", cVenv + "/extensions/ringqt")
             lFoundAny = true
         ok
+
+        # G. Qt Core Dependency: ObjectsLib (required by MVC controllerparent)
+        harvestLibrary(cHost, cVenv, "objectslib")
+
         return lFoundAny
     ok
 
@@ -451,7 +462,21 @@ func harvestLibrary cHost, cVenv, cLib
         return lFoundAny
     ok
 
-    # 7. Generalized Auto-Discovery Fallback:
+    # 7. Specialized Recipe: ObjectsLib
+    if cLower = "objectslib" or cLower = "objects"
+        if fexists(cHost + "/bin/load/objectslib.ring")
+            copyFile(cHost + "/bin/load/objectslib.ring", cDestBin + "/load/objectslib.ring")
+            if iswindows() copyFile(cHost + "/bin/load/objectslib.ring", cDestScripts + "/load/objectslib.ring") ok
+            lFoundAny = true
+        ok
+        if direxists(cHost + "/libraries/objectslib")
+            copyFolder(cHost + "/libraries/objectslib", cVenv + "/libraries/objectslib")
+            lFoundAny = true
+        ok
+        return lFoundAny
+    ok
+
+    # 8. Generalized Auto-Discovery Fallback:
     # A. Check bin/load/<name>.ring
     aPossibleLoaders = [cLower + ".ring", cLower + "lib.ring", "ring" + cLower + ".ring"]
     for cLdr in aPossibleLoaders
@@ -494,3 +519,104 @@ func harvestLibrary cHost, cVenv, cLib
     ok
 
     return lFoundAny
+
+# Automatically scan project sources for load statements and harvest missing host libraries
+func harvestScan
+    cHost = getHostRingDir()
+    if cHost = ""
+        ? uiError("Could not locate a full Ring installation on this system.")
+        return false
+    ok
+
+    cTargetVenv = getTargetVenvDir()
+    if cTargetVenv = ""
+        ? uiError("No active virtual environment detected.")
+        return false
+    ok
+
+    uiBanner("Scanning Project Dependencies", "Analyzing load statements for missing host libraries...")
+    ? ""
+
+    # Collect all .ring files from project root and src/
+    aFilesToScan = []
+    aRootFiles = dir(".")
+    for aItem in aRootFiles
+        cName = aItem[1]
+        if right(lower(cName), 5) = ".ring"
+            aFilesToScan + cName
+        ok
+    next
+    if direxists("src")
+        aSrcFiles = dir("src")
+        for aItem in aSrcFiles
+            cName = aItem[1]
+            if right(lower(cName), 5) = ".ring"
+                aFilesToScan + ("src/" + cName)
+            ok
+        next
+    ok
+
+    aDiscoveredLoads = []
+    for cFilePath in aFilesToScan
+        if not fexists(cFilePath) loop ok
+        cContent = read(cFilePath)
+        aLines = split(cContent, nl)
+        for cLine in aLines
+            cTrim = trim(cLine)
+            cLowerLine = lower(cTrim)
+            if substr(cLowerLine, "load ") = 1
+                nQ1 = substr(cTrim, '"')
+                if nQ1 > 0
+                    nQ2 = substr(substr(cTrim, nQ1 + 1), '"')
+                    if nQ2 > 0
+                        cLoaded = substr(cTrim, nQ1 + 1, nQ2 - 1)
+                        cLoaded = lower(trim(cLoaded))
+                        if find(aDiscoveredLoads, cLoaded) = 0
+                            aDiscoveredLoads + cLoaded
+                        ok
+                    ok
+                ok
+            ok
+        next
+    next
+
+    nAutoHarvested = 0
+    for cLoadItem in aDiscoveredLoads
+        if fexists(cLoadItem) or fexists("src/" + cLoadItem) or fexists("../" + cLoadItem)
+            loop
+        ok
+
+        cLibLookup = cLoadItem
+        if right(cLibLookup, 5) = ".ring"
+            cLibLookup = left(cLibLookup, len(cLibLookup) - 5)
+        ok
+
+        lInVenv = fexists(cTargetVenv + "/bin/load/" + cLoadItem) or
+                  direxists(cTargetVenv + "/libraries/" + cLibLookup) or
+                  fexists(cTargetVenv + "/libraries/" + cLoadItem)
+
+        if not lInVenv
+            lInHost = fexists(cHost + "/bin/load/" + cLoadItem) or
+                      direxists(cHost + "/libraries/" + cLibLookup)
+
+            if lInHost
+                ? "  " + uiStyle("Auto-detected missing library: ", C_BOLD + C_WHITE) + uiStyle(cLibLookup, C_BOLD + C_BYELLOW)
+                if harvestLibrary(cHost, cTargetVenv, cLibLookup)
+                    nAutoHarvested++
+                    ? "  " + uiStyle("[✔] Auto-harvested: ", C_BGREEN) + uiStyle(cLibLookup, C_BOLD + C_WHITE) + " into virtual environment."
+                ok
+                ? ""
+            ok
+        ok
+    next
+
+    if nAutoHarvested > 0
+        uiDivider()
+        uiSuccess("Auto-harvest complete: " + nAutoHarvested + " missing library(ies) resolved.")
+        uiDivider()
+    else
+        ? "  " + uiStyle("[✔] All scanned dependencies are already resolved in environment.", C_BGREEN)
+        ? ""
+    ok
+
+    return true

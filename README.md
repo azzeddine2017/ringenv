@@ -282,16 +282,47 @@ When activated:
 
 ---
 
+### 8. Host Library Harvester (`harvest`)
+Directly imports built-in libraries, GUI frameworks, runtime DLLs, and C/C++ extensions from the host Ring installation (e.g. `C:\ring`) into the active isolated virtual environment:
+
+```bash
+# Harvest GUI frameworks and runtime DLLs into virtual environment
+ringenv harvest guilib
+ringenv harvest raylib
+ringenv harvest threads
+ringenv harvest libuv
+
+# Auto-scan project sources and harvest missing host dependencies automatically
+ringenv harvest scan
+
+# Harvest multiple packages from a manifest file (e.g. env_packages.txt)
+ringenv harvest -f env_packages.txt
+
+# Harvest C/C++ extension wrappers for Android NDK compilation (into src/cpp/ext/)
+ringenv harvest sqlite --android
+ringenv harvest cjson --android
+
+# List all harvestable libraries from the host installation
+ringenv harvest list
+```
+
+---
+
 ## Project Lifecycle & Packaging (`build` & `scaffold`)
 
 `ringenv` manages the complete application lifecycle, from development to standalone packaging for desktop and mobile devices:
 
 ```bash
-# Compile standalone desktop executable package (powered by ring2exe-plus)
+# Compile standalone desktop executable package (with zero-config DLL & Qt plugin bundling)
 ringenv build desktop
 
-# Build standalone Android APK package (powered by ring2apk)
+# Build standalone Android APK package with Dynamic C-Extension Auto-Harvesting (into libmain.so)
 ringenv build apk
+
+# Export complete Qt Creator Mobile project for RingQt GUI applications (AnalogClock, etc.)
+ringenv build qtmobile
+# or:
+ringenv scaffold qtmobile
 
 # Configure and verify Android SDK, NDK, and JDK toolchains
 ringenv build setup-android
@@ -302,6 +333,7 @@ ringenv setup android
 ringenv scaffold all
 ringenv scaffold desktop
 ringenv scaffold apk
+ringenv scaffold qtmobile
 ```
 
 See the [Packaging and Distribution Guide](docs/packaging_and_distribution.md) for complete details.

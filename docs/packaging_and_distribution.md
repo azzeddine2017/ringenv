@@ -341,7 +341,78 @@ echo [3/3] Build finished! Check build/ outputs.
 
 ---
 
-## 5. Publishing as a Ring Package (`package.ring`)
+### 4.5. Dynamic Android Engine & Native C-Extension Auto-Linking
+
+Unlike desktop operating systems, Android does not support runtime dynamic library loading (`LoadLib("...dll")` or `LoadLib("...so")`). Every C/C++ extension must be compiled and linked directly into `libmain.so` at build time.
+
+`ringenv build apk` features an automated pre-flight dependency analyzer:
+
+```bash
+ringenv build apk
+```
+
+When triggered, `ringenv`:
+1. **Scans Project Code:** Parses all `load "..."` statements in project source files.
+2. **Auto-Harvests C Extensions:** Automatically identifies supported C/C++ extensions (`sqlite`, `cjson`, `threads`, `openssl`, `raylib`, `curl`, `libuv`, etc.) and imports their native sources into `src/cpp/ext/<lib>` with zero manual steps.
+3. **Generates NDK Build System:** Automatically provides `src/cpp/CMakeLists.txt`, `src/cpp/cmake/RingExtensions.cmake`, and `src/cpp/main.c` (with stdout/stderr redirected to Android logcat `adb logcat -s RingOutput:D`).
+4. **Detects Desktop-Only Libraries:** Warns immediately if desktop-exclusive APIs (`libui`, `winapi`) are referenced.
+5. **Advises on GUI Frameworks:** Informs the developer if Qt (`guilib`) is detected, offering one-click export to `ringenv scaffold qtmobile`.
+
+---
+
+## 5. RingQt Mobile Development (`ringenv scaffold qtmobile`)
+
+For applications that rely on **Qt5 Widgets** (`guilib`, `lightguilib`, or `AnalogClock`), Ring provides official Qt Mobile support through Qt Creator and Qt for Android.
+
+`ringenv` can generate and export a complete Qt Creator mobile project ready to build:
+
+```bash
+# Export Qt Mobile project into android-qt/
+ringenv scaffold qtmobile
+# or:
+ringenv build qtmobile
+```
+
+### What this command does:
+1. Compiles your Ring entry point (`src/main.ring` or `AnalogClock.ring`) into bytecode: `android-qt/ringapp.ringo`.
+2. Extracts the official RingQt Android project template (`main.cpp`, `project.pro`, `ring/`, `ringqt/`).
+3. Automatically collects all project media (images, icons, textures) and packages them into `android-qt/project.qrc`.
+4. Outputs a ready-to-build Qt project at `android-qt/project.pro`.
+
+### How to Build & Run:
+1. Open `android-qt/project.pro` in **Qt Creator**.
+2. Select your installed **Android Kit** (e.g. Qt 5.15.2 for Android Clang arm64-v8a).
+3. Click **Run (Ctrl+R)** to compile the APK with full Qt GUI and launch it on your device or emulator!
+
+---
+
+## 6. Host Library Harvester (`ringenv harvest`)
+
+Virtual environments often require built-in libraries, GUI frameworks, or C wrappers already present in the host Ring installation (e.g. `C:\ring`). `ringenv harvest` imports them cleanly without manual file copying:
+
+```bash
+# Import Qt GUI runtime, RingQt DLLs, and platform plugins
+ringenv harvest guilib
+
+# Import game engine or async runtimes
+ringenv harvest raylib
+ringenv harvest threads
+ringenv harvest libuv
+
+# Auto-scan project sources and harvest missing host dependencies automatically
+ringenv harvest scan
+
+# Import dependencies declared in a manifest file (e.g. env_packages.txt)
+ringenv harvest -f env_packages.txt
+
+# Import C/C++ extension wrappers for Android NDK compilation
+ringenv harvest sqlite --android
+ringenv harvest cjson --android
+```
+
+---
+
+## 7. Publishing as a Ring Package (`package.ring`)
 
 To publish your library or application so other Ring developers can install it via `ringpm` or discover it in `ringenv hub`:
 

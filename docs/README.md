@@ -32,9 +32,11 @@ Welcome to the official documentation for **ringenv**, the native isolated virtu
 
 5. [Packaging and Distribution](packaging_and_distribution.md)
    - Professional project layout and best practices
-   - Writing code that loads virtual environment dependencies
+   - Host library harvester (`ringenv harvest`)
+   - Desktop packaging with automatic Qt DLL bundling (`ringenv build desktop`)
+   - Dynamic Android APK engine with native C-extension harvesting (`ringenv build apk`)
+   - RingQt Mobile project scaffolding for Qt Creator (`ringenv scaffold qtmobile`)
    - Distributing as a Ring package (`package.ring`)
-   - Compiling standalone binaries with `ring2exe`
 
 ---
 
@@ -47,6 +49,11 @@ Welcome to the official documentation for **ringenv**, the native isolated virtu
 | `ringenv install <version>` | Download and install a specific Ring runtime |
 | `ringenv remove <version>` | Uninstall and remove an installed Ring runtime |
 | `ringenv venv create <dir>` | Create an isolated virtual environment in `<dir>` |
+| `ringenv harvest <library>` | Harvest official host runtime libraries (`guilib`, `raylib`, etc.) |
+| `ringenv harvest scan` | Scan current project for missing libraries and harvest them automatically |
+| `ringenv build desktop` | Package standalone desktop release with all runtime DLLs and Qt plugins |
+| `ringenv build apk` | Build Android APK package with dynamic native C extension auto-linking |
+| `ringenv scaffold qtmobile` | Export turnkey RingQt Android/iOS project for Qt Creator |
 | `ringenv hub` | Browse community-developed external libraries |
 | `ringenv hub --all` | Show all 250+ packages in the Ring registry |
 | `ringenv hub --official` | Show official core extensions, samples, and games |

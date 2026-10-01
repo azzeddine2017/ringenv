@@ -2,7 +2,7 @@
 # Cross-platform support for Windows, Linux, and macOS
 
 # Default global version (overridden by main.ring)
-cVersion = "1.0.3"
+cVersion = "1.1.0"
 
 # Detect operating system platform name
 func getPlatformName

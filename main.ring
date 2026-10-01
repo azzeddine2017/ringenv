@@ -19,7 +19,7 @@ load "src/commands/cmd_venv.ring"
 load "src/commands/cmd_build.ring"
 load "src/commands/cmd_harvest.ring"
 
-cVersion = "1.0.3"
+cVersion = "1.1.0"
 
 func main
     # Switch working directory to caller's directory

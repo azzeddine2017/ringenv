@@ -7,9 +7,13 @@ aPackageInfo = [
 	:developer = "Azzeddine Remmal",
 	:email = "azzeddine.remmal@gmail.com",
 	:license = "MIT License",
-	:version = "1.0.3",
+	:version = "1.1.0",
 	:ringversion = "1.27",
 	:versions = [
+		[
+			:version = "1.1.0",
+			:branch = "master"
+		],
 		[
 			:version = "1.0.3",
 			:branch = "master"
@@ -43,6 +47,7 @@ aPackageInfo = [
 		"src/commands/cmd_hub.ring",
 		"src/commands/cmd_venv.ring",
 		"src/commands/cmd_build.ring",
+		"src/commands/cmd_harvest.ring",
 		"tests/test_ringenv.ring",
 		"docs/README.md",
 		"docs/getting_started.md",

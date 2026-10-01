@@ -2,6 +2,7 @@
 # Production Project Lifecycle Management for Desktop (ring2exe-plus) & Mobile (ring2apk)
 
 load "stdlibcore.ring"
+load "cmd_harvest.ring"
 
 # Main entry point for 'ringenv build' command
 func cmdBuild aArgs
@@ -40,6 +41,12 @@ func cmdBuild aArgs
         on "android"
             buildApk(aArgs)
 
+        on "qtmobile"
+            buildQtMobile(aArgs)
+
+        on "mobileqt"
+            buildQtMobile(aArgs)
+
         on "setup-android"
             buildSetupAndroid()
 
@@ -64,22 +71,25 @@ func showBuildHelp
     ? ""
     ? "  " + uiStyle("Usage:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("ringenv build <target> [options]", C_BOLD + C_BYELLOW)
-    ? "    " + uiStyle("ringenv scaffold [desktop|apk|all]", C_BOLD + C_BYELLOW)
+    ? "    " + uiStyle("ringenv scaffold [desktop|apk|qtmobile|all]", C_BOLD + C_BYELLOW)
     ? ""
     ? "  " + uiStyle("Build Targets:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("desktop / exe", C_BOLD + C_BCYAN) + "        Build standalone desktop executable (powered by ring2exe-plus)"
     ? "    " + uiStyle("apk / android", C_BOLD + C_BCYAN) + "        Build standalone Android APK package (powered by ring2apk)"
+    ? "    " + uiStyle("qtmobile / mobileqt", C_BOLD + C_BCYAN) + "    Export Qt Creator Android/iOS project (RingQt & full GUI)"
     ? "    " + uiStyle("setup-android", C_BOLD + C_BCYAN) + "        Verify and launch Android SDK/NDK/JDK toolchain installer"
     ? "    " + uiStyle("scaffold [type]", C_BOLD + C_BCYAN) + "      Generate configuration files and build automation scripts"
     ? ""
     ? "  " + uiStyle("Scaffold Types:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("scaffold desktop", C_BOLD + C_BMAGENTA) + "   Create ring2exe.conf and desktop build scripts (.bat & .sh)"
     ? "    " + uiStyle("scaffold apk", C_BOLD + C_BMAGENTA) + "       Create ring2apk.ring and Android build scripts (.bat & .sh)"
+    ? "    " + uiStyle("scaffold qtmobile", C_BOLD + C_BMAGENTA) + "  Generate Qt Creator mobile project for RingQt GUI apps"
     ? "    " + uiStyle("scaffold all", C_BOLD + C_BMAGENTA) + "       Create full desktop and mobile build configuration suite"
     ? ""
     ? "  " + uiStyle("Examples:", C_BOLD + C_WHITE)
     ? "    ringenv build desktop"
     ? "    ringenv build apk"
+    ? "    ringenv build qtmobile"
     ? "    ringenv build setup-android"
     ? "    ringenv scaffold all"
     ? uiStyle("======================================================================", C_CYAN)
@@ -289,34 +299,93 @@ func buildDesktop aArgs
     # Bundle active Ring runtime libraries (DLLs on Windows, SO on Linux) exclusively into cDistDir
     uiDivider()
     ? "  " + uiStyle("Bundling Runtime Dependencies & Assets...", C_BOLD + C_WHITE)
+    
+    # Locate runtime binary directory (prefer active virtual environment, then fallback to exefolder)
     cBinDir = exefolder()
+    cVenvDir = sysget("RVENV_DIR")
+    if cVenvDir != "" and direxists(cVenvDir + "/bin")
+        cBinDir = normalizePath(cVenvDir + "/bin")
+    but direxists(".rvenv/bin")
+        cBinDir = normalizePath(".rvenv/bin")
+    but direxists("rvenv/bin")
+        cBinDir = normalizePath("rvenv/bin")
+    ok
+
     if iswindows()
         # Copy core ring DLL to release package
         if fexists(cBinDir + "/ring.dll")
             copyFile(cBinDir + "/ring.dll", cDistDir + "/ring.dll")
         ok
-        # Copy library DLLs if present to release package
+
+        # Copy ALL DLLs present in active environment bin directory
         aDllNames = dir(cBinDir)
         for aItem in aDllNames
             cItemName = aItem[1]
             cLower = lower(cItemName)
             if substr(cLower, ".dll") > 0
-                if substr(cLower, "webview") > 0 or substr(cLower, "libsql") > 0 or
-                   substr(cLower, "sqlite") > 0 or substr(cLower, "ssl") > 0 or
-                   substr(cLower, "crypto") > 0 or substr(cLower, "socket") > 0 or
-                   substr(cLower, "curl") > 0
-                    copyFile(cBinDir + "/" + cItemName, cDistDir + "/" + cItemName)
-                ok
+                copyFile(cBinDir + "/" + cItemName, cDistDir + "/" + cItemName)
             ok
         next
+
+        # Copy Qt / GUI plugins (platforms, imageformats, styles)
+        if direxists(cBinDir + "/platforms")
+            copyFolder(cBinDir + "/platforms", cDistDir + "/platforms")
+        ok
+        if direxists(cBinDir + "/imageformats")
+            copyFolder(cBinDir + "/imageformats", cDistDir + "/imageformats")
+        ok
+        if direxists(cBinDir + "/styles")
+            copyFolder(cBinDir + "/styles", cDistDir + "/styles")
+        ok
+
+        # Copy ring.exe CLI binary for diagnostics/debugging
+        if fexists(cBinDir + "/ring.exe")
+            copyFile(cBinDir + "/ring.exe", cDistDir + "/ring.exe")
+        ok
+
+        # Generate qt.conf if Qt is bundled to guarantee local plugin loading
+        if fexists(cDistDir + "/ringqt.dll") or fexists(cDistDir + "/ringqt_light.dll")
+            write(cDistDir + "/qt.conf", "[Paths]" + nl + "Prefix = ." + nl + "Plugins = ." + nl)
+        ok
     ok
 
-    # Copy assets folder if present
+    # Copy assets, public, and res folders if present
     if direxists("assets")
         copyFolder("assets", cDistDir + "/assets")
     ok
     if direxists("public")
         copyFolder("public", cDistDir + "/public")
+    ok
+    if direxists("res")
+        copyFolder("res", cDistDir + "/res")
+    ok
+
+    # Copy project media files (images, icons, sounds) from root and src/
+    aMediaExts = [".jpg", ".jpeg", ".png", ".bmp", ".ico", ".gif", ".wav", ".mp3", ".ogg", ".ttf", ".otf"]
+    aRootFiles = dir(".")
+    for aItem in aRootFiles
+        cName = aItem[1]
+        cLowerName = lower(cName)
+        for cExt in aMediaExts
+            if substr(cLowerName, cExt) > 0
+                copyFile(cName, cDistDir + "/" + cName)
+                exit
+            ok
+        next
+    next
+
+    if direxists("src")
+        aSrcMedia = dir("src")
+        for aItem in aSrcMedia
+            cName = aItem[1]
+            cLowerName = lower(cName)
+            for cExt in aMediaExts
+                if substr(cLowerName, cExt) > 0
+                    copyFile("src/" + cName, cDistDir + "/" + cName)
+                    exit
+                ok
+            next
+        next
     ok
 
     # Create convenient launcher script
@@ -415,11 +484,18 @@ func buildApk aArgs
     ? "  " + uiStyle("Config File:   ", C_BOLD + C_WHITE) + uiStyle(cConfFile, C_BCYAN)
     ? ""
 
+    # Dynamic Android Compatibility Analysis and Extension Auto-Harvester
+    analyzeAndHarvestAndroidDeps()
+
     # Stage ring/ directory temporarily only if needed
     lTemporaryRingDir = false
     if not direxists("ring") and fexists("src/main.ring")
         ensureDir("ring")
         copyFolder("src", "ring")
+        if direxists("src")
+            ensureDir("ring/src")
+            copyFolder("src", "ring/src")
+        ok
         lTemporaryRingDir = true
     ok
 
@@ -545,6 +621,9 @@ func buildSetupAndroid
 # Generate build configuration and shell scripts
 func buildScaffold cType
     cTarget = lower(trim(cType))
+    if cTarget = "qtmobile" or cTarget = "mobileqt"
+        return buildQtMobile([])
+    ok
     if cTarget = "" or cTarget = "all"
         lDesktop = true
         lApk = true
@@ -555,7 +634,7 @@ func buildScaffold cType
         lDesktop = false
         lApk = true
     else
-        ? uiError("Invalid scaffold target: '" + cType + "'. Supported: desktop, apk, all")
+        ? uiError("Invalid scaffold target: '" + cType + "'. Supported: desktop, apk, qtmobile, all")
         return false
     ok
 
@@ -721,6 +800,149 @@ func buildScaffold cType
             write("res/values/strings.xml", cStrings)
             ? "  " + uiStyle("[+] Created: ", C_BGREEN) + uiStyle("res/values/strings.xml", C_BOLD + C_WHITE)
         ok
+
+        # 6. src/cpp Native NDK Toolchain & Extensions Support (libmain.so)
+        ensureDir("src/cpp")
+        ensureDir("src/cpp/ext")
+        ensureDir("src/cpp/cmake")
+        ensureDir("src/cpp/ring")
+
+        cRingHost = ""
+        cHostEnv = sysget("HOST_RING_DIR")
+        if cHostEnv != "" and direxists(cHostEnv)
+            cRingHost = normalizePath(cHostEnv)
+        but direxists("C:/ring")
+            cRingHost = "C:/ring"
+        but direxists(exefolder() + "/..")
+            cRingHost = normalizePath(exefolder() + "/..")
+        ok
+
+        if cRingHost != ""
+            cRing2ApkPkg = cRingHost + "/tools/ringpm/packages/ring2apk"
+            if fexists(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/RingExtensions.cmake") and not fexists("src/cpp/cmake/RingExtensions.cmake")
+                copyFile(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/RingExtensions.cmake", "src/cpp/cmake/RingExtensions.cmake")
+            ok
+            if fexists(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/ext.c.in") and not fexists("src/cpp/cmake/ext.c.in")
+                copyFile(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/ext.c.in", "src/cpp/cmake/ext.c.in")
+            ok
+
+            if not direxists("src/cpp/ring/src") or not direxists("src/cpp/ring/include")
+                cLangSrc = cRingHost + "/language/src"
+                cLangInc = cRingHost + "/language/include"
+                if direxists(cLangSrc) and direxists(cLangInc)
+                    ensureDir("src/cpp/ring/src")
+                    ensureDir("src/cpp/ring/include")
+                    aFiles = dir(cLangSrc)
+                    for aItem in aFiles
+                        cFile = aItem[1]
+                        if aItem[2] = 0 and cFile != "ring.c" and cFile != "ringw.c"
+                            copyFile(cLangSrc + "/" + cFile, "src/cpp/ring/src/" + cFile)
+                        ok
+                    next
+                    copyFolder(cLangInc, "src/cpp/ring/include")
+                ok
+            ok
+        ok
+
+        if not fexists("src/cpp/main.c")
+            cMain = '/* Ring Android Native Application Entry Point */' + nl +
+                    '#include <android_native_app_glue.h>' + nl +
+                    '#include <android/log.h>' + nl +
+                    '#include <stdio.h>' + nl +
+                    '#include <stdlib.h>' + nl +
+                    '#include <string.h>' + nl +
+                    '#include <unistd.h>' + nl +
+                    '#include <pthread.h>' + nl + nl +
+                    '#include "ring.h"' + nl +
+                    '#include "ringappcode.h"' + nl + nl +
+                    '#define LOG_TAG "RingApp"' + nl +
+                    '#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)' + nl +
+                    '#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)' + nl + nl +
+                    'static int pfd[2];' + nl +
+                    'static pthread_t thr;' + nl + nl +
+                    'static void *thread_func(void *arg) {' + nl +
+                    '    (void)arg;' + nl +
+                    '    ssize_t rdsz;' + nl +
+                    '    char buf[256];' + nl +
+                    '    while ((rdsz = read(pfd[0], buf, sizeof(buf) - 1)) > 0) {' + nl +
+                    '        buf[rdsz] = 0;' + nl +
+                    '        __android_log_write(ANDROID_LOG_DEBUG, "RingOutput", buf);' + nl +
+                    '    }' + nl +
+                    '    return 0;' + nl +
+                    '}' + nl + nl +
+                    'static void start_logger(void) {' + nl +
+                    '    setvbuf(stdout, 0, _IOLBF, 0);' + nl +
+                    '    setvbuf(stderr, 0, _IONBF, 0);' + nl +
+                    '    pipe(pfd);' + nl +
+                    '    dup2(pfd[1], 1);' + nl +
+                    '    dup2(pfd[1], 2);' + nl +
+                    '    pthread_create(&thr, 0, thread_func, 0);' + nl +
+                    '}' + nl + nl +
+                    'void android_main(struct android_app *app) {' + nl +
+                    '    (void)app;' + nl +
+                    '    start_logger();' + nl +
+                    '    LOGI("=== Ring App Starting ===");' + nl + nl +
+                    '    RingState *pState = ring_state_new();' + nl +
+                    '    if (!pState) {' + nl +
+                    '        LOGE("Failed to create Ring state");' + nl +
+                    '        return;' + nl +
+                    '    }' + nl +
+                    '    pState->lRun = 1;' + nl +
+                    '    ringappcode_run(pState);' + nl +
+                    '    ring_state_delete(pState);' + nl +
+                    '    LOGI("=== Ring App Finished ===");' + nl +
+                    '}' + nl
+            write("src/cpp/main.c", cMain)
+            ? "  " + uiStyle("[+] Created: ", C_BGREEN) + uiStyle("src/cpp/main.c", C_BOLD + C_WHITE)
+        ok
+
+        if not fexists("src/cpp/CMakeLists.txt")
+            cCMake = 'cmake_minimum_required(VERSION 3.22)' + nl +
+                     'project(ringapp C CXX)' + nl + nl +
+                     'set(CMAKE_C_STANDARD 99)' + nl +
+                     'set(CMAKE_C_STANDARD_REQUIRED ON)' + nl + nl +
+                     'list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")' + nl +
+                     'include(RingExtensions)' + nl + nl +
+                     'if((ANDROID_ABI STREQUAL "armeabi-v7a" OR ANDROID_ABI STREQUAL "x86") AND ANDROID_PLATFORM_LEVEL LESS 24)' + nl +
+                     '    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FILE_OFFSET_BITS")' + nl +
+                     'endif()' + nl + nl +
+                     'set(RING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ring")' + nl +
+                     'if(NOT EXISTS "${RING_DIR}/src")' + nl +
+                     '    message(FATAL_ERROR "Ring sources not found! Expected at ${RING_DIR}/src")' + nl +
+                     'endif()' + nl + nl +
+                     'file(GLOB RING_SOURCES ${RING_DIR}/src/*.c)' + nl +
+                     'list(FILTER RING_SOURCES EXCLUDE REGEX ".*/ext\\\\.c$")' + nl + nl +
+                     'add_library(ring STATIC ${RING_SOURCES})' + nl +
+                     'target_include_directories(ring PUBLIC "${RING_DIR}/include")' + nl +
+                     'target_link_libraries(ring PUBLIC android log)' + nl + nl +
+                     'set(NATIVE_APP_GLUE_DIR "${ANDROID_NDK}/sources/android/native_app_glue")' + nl +
+                     'add_library(native_app_glue STATIC' + nl +
+                     '    ${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c' + nl +
+                     ')' + nl +
+                     'target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})' + nl + nl +
+                     'add_library(main SHARED' + nl +
+                     '    main.c' + nl +
+                     '    ${CMAKE_SOURCE_DIR}/../../build/gen/ringappcode.c' + nl +
+                     ')' + nl + nl +
+                     'target_include_directories(main PRIVATE' + nl +
+                     '    ${CMAKE_CURRENT_SOURCE_DIR}' + nl +
+                     '    ${CMAKE_SOURCE_DIR}/../../build/gen' + nl +
+                     '    ${RING_DIR}/include' + nl +
+                     '    ${NATIVE_APP_GLUE_DIR}' + nl +
+                     ')' + nl + nl +
+                     'target_link_libraries(main PRIVATE' + nl +
+                     '    ring' + nl +
+                     '    -Wl,--whole-archive' + nl +
+                     '    native_app_glue' + nl +
+                     '    -Wl,--no-whole-archive' + nl +
+                     '    android' + nl +
+                     '    log' + nl +
+                     ')' + nl + nl +
+                     'set(RING_EXT_EXCLUDE tinycthread.c)' + nl +
+                     'ring_target_add_extensions(main)' + nl
+            write("src/cpp/CMakeLists.txt", cCMake)
+            ? "  " + uiStyle("[+] Created: ", C_BGREEN) + uiStyle("src/cpp/CMakeLists.txt", C_BOLD + C_WHITE)
+        ok
     ok
 
     ? ""
@@ -768,3 +990,289 @@ func getFileBaseName cPath
         return substr(cFile, 1, nDot - 1)
     ok
     return cFile
+
+# Dynamic Android Compatibility Analysis and Extension Auto-Harvester
+func analyzeAndHarvestAndroidDeps
+    cRingHost = ""
+    cHostEnv = sysget("HOST_RING_DIR")
+    if cHostEnv != "" and direxists(cHostEnv)
+        cRingHost = normalizePath(cHostEnv)
+    but direxists("C:/ring")
+        cRingHost = "C:/ring"
+    but direxists(exefolder() + "/..")
+        cRingHost = normalizePath(exefolder() + "/..")
+    ok
+
+    if cRingHost = ""
+        return
+    ok
+
+    # Ensure native scaffold structure exists
+    ensureAndroidNativeScaffold(cRingHost)
+
+    # 1. Collect all .ring files from project root, src/, and ring/
+    aFilesToScan = []
+    aRootFiles = dir(".")
+    for aItem in aRootFiles
+        cName = aItem[1]
+        if right(lower(cName), 5) = ".ring"
+            aFilesToScan + cName
+        ok
+    next
+    if direxists("src")
+        aSrcFiles = dir("src")
+        for aItem in aSrcFiles
+            cName = aItem[1]
+            if right(lower(cName), 5) = ".ring"
+                aFilesToScan + ("src/" + cName)
+            ok
+        next
+    ok
+    if direxists("ring")
+        aRingFiles = dir("ring")
+        for aItem in aRingFiles
+            cName = aItem[1]
+            if right(lower(cName), 5) = ".ring"
+                aFilesToScan + ("ring/" + cName)
+            ok
+        next
+    ok
+
+    aLoads = []
+    for cFilePath in aFilesToScan
+        if not fexists(cFilePath) loop ok
+        cContent = read(cFilePath)
+        aLines = split(cContent, nl)
+        for cLine in aLines
+            cTrim = trim(cLine)
+            cLowerLine = lower(cTrim)
+            if substr(cLowerLine, "load ") = 1
+                nQ1 = substr(cTrim, '"')
+                if nQ1 > 0
+                    nQ2 = substr(substr(cTrim, nQ1 + 1), '"')
+                    if nQ2 > 0
+                        cLoaded = substr(cTrim, nQ1 + 1, nQ2 - 1)
+                        cLoaded = lower(trim(cLoaded))
+                        if right(cLoaded, 5) = ".ring"
+                            cLoaded = left(cLoaded, len(cLoaded) - 5)
+                        ok
+                        if find(aLoads, cLoaded) = 0
+                            aLoads + cLoaded
+                        ok
+                    ok
+                ok
+            ok
+        next
+    next
+
+    # Classify dependencies
+    aAutoHarvestTargets = [
+        "cjson", "sqlite", "sqlitelib", "threads", "ringthreads",
+        "ringthreadpro", "openssl", "raylib", "ringraylib5",
+        "curl", "libcurl", "libuv", "stbimage", "ringstbimage",
+        "fastpro", "ringfastpro", "murmurhash", "ringmurmurhash",
+        "zip", "ringzip"
+    ]
+
+    aQtTargets = ["guilib", "lightguilib", "qt", "ringqt", "qtcore"]
+
+    aDesktopOnly = ["libui", "ringlibui", "winapi", "winlib", "wincreg", "nappgui", "freeglut"]
+
+    lHasQt = false
+    aFoundDesktopOnly = []
+    aHarvestedNow = []
+
+    for cLoad in aLoads
+        if find(aDesktopOnly, cLoad) > 0
+            if find(aFoundDesktopOnly, cLoad) = 0
+                aFoundDesktopOnly + cLoad
+            ok
+        ok
+
+        if find(aQtTargets, cLoad) > 0
+            lHasQt = true
+        ok
+
+        if find(aAutoHarvestTargets, cLoad) > 0
+            cCleanName = cLoad
+            if left(cCleanName, 4) = "ring"
+                cCleanName = substr(cCleanName, 5)
+            ok
+            if cCleanName = "sqlitelib"
+                cCleanName = "sqlite"
+            ok
+            if not direxists("src/cpp/ext/" + cCleanName)
+                if harvestAndroidNative(cRingHost, cCleanName)
+                    aHarvestedNow + cCleanName
+                ok
+            ok
+        ok
+    next
+
+    if len(aHarvestedNow) > 0 or len(aFoundDesktopOnly) > 0 or lHasQt
+        uiDivider()
+        ? "  " + uiStyle("Dynamic Android Compatibility Analysis:", C_BOLD + C_WHITE)
+        
+        for cExt in aHarvestedNow
+            ? "  " + uiStyle("[✔] Auto-harvested native NDK extension: ", C_BGREEN) + uiStyle(cExt, C_BOLD + C_WHITE) + " (linked to libmain.so)"
+        next
+
+        if lHasQt
+            ? "  " + uiStyle("[!] Advisory: ", C_BYELLOW) + "Project uses Qt GUI framework ('guilib')."
+            ? "      " + uiStyle("Standalone NDK APK uses WebView or Raylib for GUI.", C_DIM)
+            ? "      " + uiStyle("To export full Qt GUI for Android via Qt Creator, run:", C_DIM) + " " + uiStyle("ringenv scaffold qtmobile", C_BCYAN)
+        ok
+
+        for cDesk in aFoundDesktopOnly
+            ? "  " + uiStyle("[!] Warning:  ", C_BRED) + "Detected desktop-only library '" + cDesk + "' (not supported on Android NDK)."
+        next
+        uiDivider()
+    ok
+
+# Prepare and export Qt Creator Mobile project (for RingQt / guilib / AnalogClock)
+func buildQtMobile aArgs
+    uiBanner("Preparing Qt Mobile Project (Android / iOS)", "For RingQt & GUI Applications")
+    ? ""
+
+    # Locate Host Ring directory
+    cRingHost = ""
+    cHostEnv = sysget("HOST_RING_DIR")
+    if cHostEnv != "" and direxists(cHostEnv)
+        cRingHost = normalizePath(cHostEnv)
+    but direxists("C:/ring")
+        cRingHost = "C:/ring"
+    but direxists(exefolder() + "/..")
+        cRingHost = normalizePath(exefolder() + "/..")
+    ok
+
+    if cRingHost = ""
+        ? uiError("Could not locate a full Ring installation on this system.")
+        return false
+    ok
+
+    cQtTemplate = cRingHost + "/extensions/android/ringqt/project"
+    if not direxists(cQtTemplate)
+        ? uiError("RingQt Android template not found at: " + cQtTemplate)
+        return false
+    ok
+
+    # Determine entry source file
+    cConfPath = "ring2exe.conf"
+    aConf = parseConfigFile(cConfPath)
+    cSource = "src/main.ring"
+    if aConf["source"] != NULL and aConf["source"] != ""
+        cSource = aConf["source"]
+    but fexists("src/AnalogClock.ring")
+        cSource = "src/AnalogClock.ring"
+    but fexists("AnalogClock.ring")
+        cSource = "AnalogClock.ring"
+    but fexists("main.ring")
+        cSource = "main.ring"
+    ok
+
+    if not fexists(cSource)
+        ? uiError("Source file not found: " + cSource)
+        return false
+    ok
+
+    cAppName = "MyApp"
+    if aConf["output"] != NULL and aConf["output"] != ""
+        cAppName = aConf["output"]
+    ok
+
+    cDest = "android-qt"
+    ensureDir(cDest)
+
+    ? "  " + uiStyle("Source File:      ", C_BOLD + C_WHITE) + uiStyle(cSource, C_BCYAN)
+    ? "  " + uiStyle("Target Directory: ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cDest), C_BYELLOW)
+    ? ""
+
+    # 1. Copy Ring and RingQt NDK sources from template
+    ensureDir(cDest + "/ring")
+    ensureDir(cDest + "/ringqt")
+    copyFolder(cQtTemplate + "/ring", cDest + "/ring")
+    copyFolder(cQtTemplate + "/ringqt", cDest + "/ringqt")
+
+    # 2. Copy main.cpp and project.pro
+    copyFile(cQtTemplate + "/main.cpp", cDest + "/main.cpp")
+    copyFile(cQtTemplate + "/project.pro", cDest + "/project.pro")
+
+    # 3. Compile Ring source into bytecode (.ringo)
+    ? "  " + uiStyle("Compiling Ring bytecode for Mobile...", C_BOLD + C_WHITE)
+    systemSilent('ring "' + toNativePath(cSource) + '" -go -norun')
+
+    # Find generated ringo
+    cBase = getFileBaseName(cSource)
+    cGeneratedRingo = cBase + ".ringo"
+    cSrcDir = getFileDir(cSource)
+    if not fexists(cGeneratedRingo) and fexists(cSrcDir + "/" + cGeneratedRingo)
+        cGeneratedRingo = cSrcDir + "/" + cGeneratedRingo
+    ok
+
+    if fexists(cGeneratedRingo)
+        copyFile(cGeneratedRingo, cDest + "/ringapp.ringo")
+        if cGeneratedRingo != (cDest + "/ringapp.ringo")
+            remove(cGeneratedRingo)
+        ok
+        ? "  " + uiStyle("[✔] Embedded bytecode: ", C_BGREEN) + uiStyle("android-qt/ringapp.ringo", C_BOLD + C_WHITE)
+    else
+        ? uiError("Failed to compile Ring bytecode: " + cGeneratedRingo)
+        return false
+    ok
+
+    # 4. Copy project media and assets
+    aMediaExts = [".jpg", ".jpeg", ".png", ".bmp", ".ico", ".gif", ".wav", ".mp3", ".ogg", ".ttf", ".otf"]
+    aFoundMedia = []
+    aFilesToCheck = dir(".")
+    for aItem in aFilesToCheck
+        cName = aItem[1]
+        cLowerName = lower(cName)
+        for cExt in aMediaExts
+            if substr(cLowerName, cExt) > 0
+                copyFile(cName, cDest + "/" + cName)
+                aFoundMedia + cName
+                exit
+            ok
+        next
+    next
+
+    if direxists("src")
+        aSrcFiles = dir("src")
+        for aItem in aSrcFiles
+            cName = aItem[1]
+            cLowerName = lower(cName)
+            for cExt in aMediaExts
+                if substr(cLowerName, cExt) > 0
+                    copyFile("src/" + cName, cDest + "/" + cName)
+                    if find(aFoundMedia, cName) = 0
+                        aFoundMedia + cName
+                    ok
+                    exit
+                ok
+            next
+        next
+    ok
+
+    # 5. Generate project.qrc
+    cQrc = '<RCC>' + nl +
+           '    <qresource prefix="/">' + nl +
+           '        <file>ringapp.ringo</file>' + nl
+    for cMedia in aFoundMedia
+        cQrc = cQrc + '        <file>' + cMedia + '</file>' + nl
+    next
+    cQrc = cQrc + '    </qresource>' + nl + '</RCC>' + nl
+    write(cDest + "/project.qrc", cQrc)
+    ? "  " + uiStyle("[✔] Generated resource manifest: ", C_BGREEN) + uiStyle("android-qt/project.qrc", C_BOLD + C_WHITE)
+
+    uiDivider()
+    uiBanner("Qt Mobile Project Ready!", "Open in Qt Creator to Build & Run on Android")
+    ? ""
+    ? "  " + uiStyle("Project Location: ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cDest), C_BOLD + C_BGREEN)
+    ? "  " + uiStyle("Qt Project File:  ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cDest + "/project.pro"), C_BOLD + C_BYELLOW)
+    ? ""
+    ? "  " + uiStyle("How to Build & Run on Android:", C_BOLD + C_WHITE)
+    ? "    1. Open " + uiStyle(toNativePath(cDest + "/project.pro"), C_BOLD + C_BCYAN) + " in " + uiStyle("Qt Creator", C_BOLD + C_WHITE)
+    ? "    2. Select an " + uiStyle("Android Kit", C_BOLD + C_BYELLOW) + " (e.g. Qt 5.15.2 for Android Clang arm64-v8a)"
+    ? "    3. Click " + uiStyle("Run (Ctrl+R)", C_BOLD + C_BGREEN) + " to compile and launch your full Qt GUI on device!"
+    uiDivider()
+    return true

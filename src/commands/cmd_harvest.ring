@@ -43,6 +43,7 @@ func showHarvestHelp
     ? ""
     ? "  " + uiStyle("Usage:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("ringenv harvest <library_or_extension>", C_BOLD + C_BYELLOW)
+    ? "    " + uiStyle("ringenv harvest <lib> --android", C_BOLD + C_BYELLOW)
     ? "    " + uiStyle("ringenv harvest scan", C_BOLD + C_BYELLOW)
     ? "    " + uiStyle("ringenv harvest -f <manifest_file>", C_BOLD + C_BYELLOW)
     ? "    " + uiStyle("ringenv harvest list", C_BOLD + C_BYELLOW)
@@ -182,6 +183,7 @@ func harvestRun aArgs
     # Parse arguments: single package, multiple packages, or manifest file
     aTargets = []
     lFileMode = false
+    lAndroidMode = false
     cManifestFile = ""
 
     nLen = len(aArgs)
@@ -194,6 +196,8 @@ func harvestRun aArgs
                 cManifestFile = aArgs[i]
                 lFileMode = true
             ok
+        but cArg = "--android" or cArg = "--native" or cArg = "-a"
+            lAndroidMode = true
         but substr(cArg, "-f=") > 0
             cManifestFile = substr(cArg, 4)
             lFileMode = true
@@ -227,17 +231,30 @@ func harvestRun aArgs
         return false
     ok
 
-    uiBanner("Harvesting Libraries from Host Ring", "Host: " + toNativePath(cHost) + " -> Target: " + toNativePath(cTargetVenv))
+    if lAndroidMode
+        uiBanner("Harvesting C Extensions for Android", "Host: " + toNativePath(cHost) + " -> Target: src/cpp/ext/ (libmain.so)")
+    else
+        uiBanner("Harvesting Libraries from Host Ring", "Host: " + toNativePath(cHost) + " -> Target: " + toNativePath(cTargetVenv))
+    ok
     ? ""
 
     nHarvested = 0
     for cLibName in aTargets
         ? "  " + uiStyle("Harvesting: ", C_BOLD + C_WHITE) + uiStyle(cLibName, C_BOLD + C_BYELLOW) + "..."
-        if harvestLibrary(cHost, cTargetVenv, cLibName)
-            nHarvested++
-            ? "  " + uiStyle("[✔] Success:  ", C_BGREEN) + uiStyle(cLibName, C_BOLD + C_WHITE) + " imported into virtual environment."
+        if lAndroidMode
+            if harvestAndroidNative(cHost, cLibName)
+                nHarvested++
+                ? "  " + uiStyle("[✔] Success:  ", C_BGREEN) + uiStyle(cLibName, C_BOLD + C_WHITE) + " C wrapper imported to src/cpp/ext/ for libmain.so."
+            else
+                ? "  " + uiStyle("[!] Warning:  ", C_BYELLOW) + "Could not find C extension source for '" + cLibName + "' in host extensions."
+            ok
         else
-            ? "  " + uiStyle("[!] Warning:  ", C_BYELLOW) + "Could not find matching files for '" + cLibName + "' in host installation."
+            if harvestLibrary(cHost, cTargetVenv, cLibName)
+                nHarvested++
+                ? "  " + uiStyle("[✔] Success:  ", C_BGREEN) + uiStyle(cLibName, C_BOLD + C_WHITE) + " imported into virtual environment."
+            else
+                ? "  " + uiStyle("[!] Warning:  ", C_BYELLOW) + "Could not find matching files for '" + cLibName + "' in host installation."
+            ok
         ok
         ? ""
     next
@@ -620,3 +637,207 @@ func harvestScan
     ok
 
     return true
+
+# Harvest C/C++ extension wrapper from host into src/cpp/ext/ for Android libmain.so compilation
+func harvestAndroidNative cHost, cLib
+    cLower = lower(trim(cLib))
+    # Strip leading ring_ or ring if user specified
+    if left(cLower, 5) = "ring_"
+        cLower = substr(cLower, 6)
+    but left(cLower, 4) = "ring"
+        cLower = substr(cLower, 5)
+    ok
+
+    # Locate source in host extensions
+    cExtHost = ""
+    if direxists(cHost + "/extensions/ring" + cLower)
+        cExtHost = cHost + "/extensions/ring" + cLower
+    but direxists(cHost + "/extensions/" + cLower)
+        cExtHost = cHost + "/extensions/" + cLower
+    ok
+
+    if cExtHost = ""
+        return false
+    ok
+
+    # Target directory in project
+    cDestExt = "src/cpp/ext/" + cLower
+    ensureAndroidNativeScaffold(cHost)
+    ensureDir(cDestExt)
+
+    # Copy C/C++ sources, headers, and helper directories
+    aItems = dir(cExtHost)
+    for aItem in aItems
+        cName = aItem[1]
+        cItemLower = lower(cName)
+        # Skip batch/shell build scripts
+        if right(cItemLower, 4) = ".bat" or right(cItemLower, 3) = ".sh" or right(cItemLower, 3) = ".cf"
+            loop
+        ok
+        # Copy .c, .cpp, .h, .hpp, .rh
+        if right(cItemLower, 2) = ".c" or right(cItemLower, 4) = ".cpp" or
+           right(cItemLower, 2) = ".h" or right(cItemLower, 4) = ".hpp" or
+           right(cItemLower, 3) = ".rh"
+            copyFile(cExtHost + "/" + cName, cDestExt + "/" + cName)
+        # Copy helper subdirectories (tinycthread, lib, etc.)
+        but direxists(cExtHost + "/" + cName)
+            if cName != "." and cName != ".." and cName != "test" and cName != "tests" and cName != "build"
+                copyFolder(cExtHost + "/" + cName, cDestExt + "/" + cName)
+            ok
+        ok
+        # Also copy .ring wrapper into src/ or ring/ (with Android LoadLib safety patch)
+        if right(cItemLower, 5) = ".ring"
+            cRingSrc = read(cExtHost + "/" + cName)
+            if substr(lower(cRingSrc), "isandroid()") = 0 and substr(lower(cRingSrc), "loadlib(") > 0
+                if substr(lower(cRingSrc), "if iswindows()") > 0
+                    cRingSrc = substr(cRingSrc, "if iswindows()", "if isandroid()" + nl + "	# Statically compiled into libmain.so" + nl + "but iswindows()")
+                but substr(lower(cRingSrc), "if iswindows ()") > 0
+                    cRingSrc = substr(cRingSrc, "if iswindows ()", "if isandroid()" + nl + "	# Statically compiled into libmain.so" + nl + "but iswindows()")
+                ok
+            ok
+            if direxists("ring")
+                write("ring/" + cName, cRingSrc)
+            ok
+            if direxists("src")
+                write("src/" + cName, cRingSrc)
+            ok
+        ok
+    next
+
+    return true
+
+# Ensure all Android NDK native scaffolding, CMake files, and Ring VM sources exist
+func ensureAndroidNativeScaffold cHost
+    ensureDir("src")
+    ensureDir("src/cpp")
+    ensureDir("src/cpp/ext")
+    ensureDir("src/cpp/cmake")
+    ensureDir("src/cpp/ring")
+
+    # 1. RingExtensions.cmake & ext.c.in
+    cRing2ApkPkg = cHost + "/tools/ringpm/packages/ring2apk"
+    if fexists(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/RingExtensions.cmake") and not fexists("src/cpp/cmake/RingExtensions.cmake")
+        copyFile(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/RingExtensions.cmake", "src/cpp/cmake/RingExtensions.cmake")
+    ok
+    if fexists(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/ext.c.in") and not fexists("src/cpp/cmake/ext.c.in")
+        copyFile(cRing2ApkPkg + "/examples/webview/src/cpp/cmake/ext.c.in", "src/cpp/cmake/ext.c.in")
+    ok
+
+    # 2. Ring VM sources (src/ and include/) from host language directory
+    if not direxists("src/cpp/ring/src") or not direxists("src/cpp/ring/include")
+        cLangSrc = cHost + "/language/src"
+        cLangInc = cHost + "/language/include"
+        if direxists(cLangSrc) and direxists(cLangInc)
+            ensureDir("src/cpp/ring/src")
+            ensureDir("src/cpp/ring/include")
+            aFiles = dir(cLangSrc)
+            for aItem in aFiles
+                cFile = aItem[1]
+                if aItem[2] = 0 and cFile != "ring.c" and cFile != "ringw.c"
+                    copyFile(cLangSrc + "/" + cFile, "src/cpp/ring/src/" + cFile)
+                ok
+            next
+            copyFolder(cLangInc, "src/cpp/ring/include")
+        ok
+    ok
+
+    # 3. Native main.c with stdout/stderr -> logcat redirection
+    if not fexists("src/cpp/main.c")
+        cMain = '/* Ring Android Native Application Entry Point */' + nl +
+                '#include <android_native_app_glue.h>' + nl +
+                '#include <android/log.h>' + nl +
+                '#include <stdio.h>' + nl +
+                '#include <stdlib.h>' + nl +
+                '#include <string.h>' + nl +
+                '#include <unistd.h>' + nl +
+                '#include <pthread.h>' + nl + nl +
+                '#include "ring.h"' + nl +
+                '#include "ringappcode.h"' + nl + nl +
+                '#define LOG_TAG "RingApp"' + nl +
+                '#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)' + nl +
+                '#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)' + nl + nl +
+                'static int pfd[2];' + nl +
+                'static pthread_t thr;' + nl + nl +
+                'static void *thread_func(void *arg) {' + nl +
+                '    (void)arg;' + nl +
+                '    ssize_t rdsz;' + nl +
+                '    char buf[256];' + nl +
+                '    while ((rdsz = read(pfd[0], buf, sizeof(buf) - 1)) > 0) {' + nl +
+                '        buf[rdsz] = 0;' + nl +
+                '        __android_log_write(ANDROID_LOG_DEBUG, "RingOutput", buf);' + nl +
+                '    }' + nl +
+                '    return 0;' + nl +
+                '}' + nl + nl +
+                'static void start_logger(void) {' + nl +
+                '    setvbuf(stdout, 0, _IOLBF, 0);' + nl +
+                '    setvbuf(stderr, 0, _IONBF, 0);' + nl +
+                '    pipe(pfd);' + nl +
+                '    dup2(pfd[1], 1);' + nl +
+                '    dup2(pfd[1], 2);' + nl +
+                '    pthread_create(&thr, 0, thread_func, 0);' + nl +
+                '}' + nl + nl +
+                'void android_main(struct android_app *app) {' + nl +
+                '    (void)app;' + nl +
+                '    start_logger();' + nl +
+                '    LOGI("=== Ring App Starting ===");' + nl + nl +
+                '    RingState *pState = ring_state_new();' + nl +
+                '    if (!pState) {' + nl +
+                '        LOGE("Failed to create Ring state");' + nl +
+                '        return;' + nl +
+                '    }' + nl +
+                '    pState->lRun = 1;' + nl +
+                '    ringappcode_run(pState);' + nl +
+                '    ring_state_delete(pState);' + nl +
+                '    LOGI("=== Ring App Finished ===");' + nl +
+                '}' + nl
+        write("src/cpp/main.c", cMain)
+    ok
+
+    # 4. CMakeLists.txt configured for RingExtensions
+    if not fexists("src/cpp/CMakeLists.txt")
+        cCMake = 'cmake_minimum_required(VERSION 3.22)' + nl +
+                 'project(ringapp C CXX)' + nl + nl +
+                 'set(CMAKE_C_STANDARD 99)' + nl +
+                 'set(CMAKE_C_STANDARD_REQUIRED ON)' + nl + nl +
+                 'list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")' + nl +
+                 'include(RingExtensions)' + nl + nl +
+                 'if((ANDROID_ABI STREQUAL "armeabi-v7a" OR ANDROID_ABI STREQUAL "x86") AND ANDROID_PLATFORM_LEVEL LESS 24)' + nl +
+                 '    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FILE_OFFSET_BITS")' + nl +
+                 'endif()' + nl + nl +
+                 'set(RING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ring")' + nl +
+                 'if(NOT EXISTS "${RING_DIR}/src")' + nl +
+                 '    message(FATAL_ERROR "Ring sources not found! Expected at ${RING_DIR}/src")' + nl +
+                 'endif()' + nl + nl +
+                 'file(GLOB RING_SOURCES ${RING_DIR}/src/*.c)' + nl +
+                 'list(FILTER RING_SOURCES EXCLUDE REGEX ".*/ext\\\\.c$")' + nl + nl +
+                 'add_library(ring STATIC ${RING_SOURCES})' + nl +
+                 'target_include_directories(ring PUBLIC "${RING_DIR}/include")' + nl +
+                 'target_link_libraries(ring PUBLIC android log)' + nl + nl +
+                 'set(NATIVE_APP_GLUE_DIR "${ANDROID_NDK}/sources/android/native_app_glue")' + nl +
+                 'add_library(native_app_glue STATIC' + nl +
+                 '    ${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c' + nl +
+                 ')' + nl +
+                 'target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})' + nl + nl +
+                 'add_library(main SHARED' + nl +
+                 '    main.c' + nl +
+                 '    ${CMAKE_SOURCE_DIR}/../../build/gen/ringappcode.c' + nl +
+                 ')' + nl + nl +
+                 'target_include_directories(main PRIVATE' + nl +
+                 '    ${CMAKE_CURRENT_SOURCE_DIR}' + nl +
+                 '    ${CMAKE_SOURCE_DIR}/../../build/gen' + nl +
+                 '    ${RING_DIR}/include' + nl +
+                 '    ${NATIVE_APP_GLUE_DIR}' + nl +
+                 ')' + nl + nl +
+                 'target_link_libraries(main PRIVATE' + nl +
+                 '    ring' + nl +
+                 '    -Wl,--whole-archive' + nl +
+                 '    native_app_glue' + nl +
+                 '    -Wl,--no-whole-archive' + nl +
+                 '    android' + nl +
+                 '    log' + nl +
+                 ')' + nl + nl +
+                 'set(RING_EXT_EXCLUDE tinycthread.c)' + nl +
+                 'ring_target_add_extensions(main)' + nl
+        write("src/cpp/CMakeLists.txt", cCMake)
+    ok
+

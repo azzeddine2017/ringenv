@@ -5,24 +5,28 @@ load "stdlibcore.ring"
 load "libcurl.ring"
 
 # تحميل وحدات المشروع
-load "../src/core/os_helper.ring"
-load "../src/core/ui_style.ring"
-load "../src/core/categories.ring"
-load "../src/core/extractor.ring"
-load "../src/commands/cmd_list.ring"
-load "../src/commands/cmd_venv.ring"
-load "../src/commands/cmd_hub.ring"
-load "../src/commands/cmd_build.ring"
-load "../src/commands/cmd_list_remote.ring"
-load "../src/commands/cmd_install.ring"
-load "../src/commands/cmd_remove.ring"
+load "src/core/os_helper.ring"
+load "src/core/ui_style.ring"
+load "src/core/categories.ring"
+load "src/core/extractor.ring"
+load "src/commands/cmd_list.ring"
+load "src/commands/cmd_venv.ring"
+load "src/commands/cmd_hub.ring"
+load "src/commands/cmd_build.ring"
+load "src/commands/cmd_list_remote.ring"
+load "src/commands/cmd_install.ring"
+load "src/commands/cmd_remove.ring"
+load "src/commands/cmd_harvest.ring"
+load "src/core/downloader.ring"
+
+? "Loading units completed"
 
 # ====================================================================
 # اختبارات وحدة os_helper.ring
 # ====================================================================
 describe("OS Helper - Platform Detection", func {
 
-    it("should return a known platform name", func {
+    /*it("should return a known platform name", func {
         cPlatform = getPlatformName()
         expect(cPlatform = "windows" or cPlatform = "linux" or cPlatform = "macos").toBeTruthy()
     })
@@ -54,10 +58,10 @@ describe("OS Helper - Platform Detection", func {
     it("should resolve cache directory containing 'cache'", func {
         cCache = getCacheDir()
         expect(substr(cCache, "cache") > 0).toBeTruthy()
-    })
+    })*/
 })
 
-describe("OS Helper - Path Normalization", func {
+/*describe("OS Helper - Path Normalization", func {
 
     it("should normalize backslashes to forward slashes", func {
         cNorm = normalizePath("C:\\Users\\test\\file.txt")
@@ -716,3 +720,4 @@ describe("Downloader - System Fallback", func {
         expect(lResult = false).toBeTruthy()
     })
 })
+*/

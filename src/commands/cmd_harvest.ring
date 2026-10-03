@@ -645,159 +645,32 @@ func harvestScan
 
     return true
 
-# Harvest C/C++ extension wrapper from host into src/cpp/ext/ for Android libmain.so compilation
-func harvestAndroidNative cHost, cLib
-    cLower = lower(trim(cLib))
-    # Strip leading ring_ or ring if user specified
-    if left(cLower, 5) = "ring_"
-        cLower = substr(cLower, 6)
-    but left(cLower, 4) = "ring"
-        cLower = substr(cLower, 5)
+# Helper: Get Android recipes template directory
+func getAndroidRecipesTemplateDir
+    cEnvRoot = sysget("RINGENV_ROOT")
+    if cEnvRoot != "" and direxists(cEnvRoot + "/templates/android/recipes")
+        return normalizePath(cEnvRoot + "/templates/android/recipes")
     ok
-
-    # Special Recipe 1: Raylib on Android (Full native Raylib NDK engine)
-    if cLower = "raylib" or cLower = "raylib5"
-        cExampleRaylib = ""
-        cVenvDir = getTargetVenvDir()
-        aCandPaths = [
-            cVenvDir + "/tools/ringpm/packages/ring2apk/examples/raylib",
-            cHost + "/tools/ringpm/packages/ring2apk/examples/raylib",
-            "tools/ringpm/packages/ring2apk/examples/raylib",
-            "C:/ring/tools/ringpm/packages/ring2apk/examples/raylib"
-        ]
-        for cCand in aCandPaths
-            if direxists(cCand)
-                cExampleRaylib = cCand
-                exit
-            ok
-        next
-
-        if cExampleRaylib != ""
-            ensureAndroidNativeScaffold(cHost)
-            ensureDir("src/cpp")
-            copyFile(cExampleRaylib + "/src/cpp/CMakeLists.txt", "src/cpp/CMakeLists.txt")
-            copyFile(cExampleRaylib + "/src/cpp/main.c", "src/cpp/main.c")
-            copyFile(cExampleRaylib + "/src/cpp/ring_raylib.c", "src/cpp/ring_raylib.c")
-            if fexists(cExampleRaylib + "/download_deps.ring")
-                copyFile(cExampleRaylib + "/download_deps.ring", "download_deps.ring")
-            ok
-            if direxists(cExampleRaylib + "/src/cpp/raylib")
-                copyFolder(cExampleRaylib + "/src/cpp/raylib", "src/cpp/raylib")
-            ok
-            if direxists(cExampleRaylib + "/src/cpp/raygui")
-                copyFolder(cExampleRaylib + "/src/cpp/raygui", "src/cpp/raygui")
-            ok
-            # Copy ALL Ring wrapper files (raylib.ring, classes.ring, functions.ring, etc.)
-            # These are needed for ring2apk bytecode compilation
-            if direxists(cExampleRaylib + "/ring")
-                aRingFiles = dir(cExampleRaylib + "/ring")
-                for aItem in aRingFiles
-                    cName = aItem[1]
-                    if cName = "." or cName = ".." loop ok
-                    if aItem[2] loop ok  # skip directories
-                    if cName = "main.ring" loop ok  # don't overwrite project's main.ring
-                    if right(lower(cName), 5) = ".ring" or right(lower(cName), 3) = ".rh"
-                        if direxists("src") copyFile(cExampleRaylib + "/ring/" + cName, "src/" + cName) ok
-                        if direxists("ring") copyFile(cExampleRaylib + "/ring/" + cName, "ring/" + cName) ok
-                    ok
-                next
-            ok
-            # Download raylib/raygui sources if not present
-            if not direxists("src/cpp/raylib") or not direxists("src/cpp/raygui")
-                if fexists("download_deps.ring")
-                    ? "  " + uiStyle("Downloading Raylib/RayGUI sources...", C_BOLD + C_BCYAN)
-                    system("ring download_deps.ring")
-                ok
-            ok
-            return true
-        ok
-    ok
-
-    # Locate source in host extensions (support ring<lib>, ring<lib>5, ringlib<lib>, <lib>)
-    cExtHost = ""
-    aCandNames = [
-        "ring" + cLower,
-        "ring" + cLower + "5",
-        "ringlib" + cLower,
-        cLower
+    aCandidates = [
+        "templates/android/recipes",
+        "../templates/android/recipes",
+        "../../templates/android/recipes",
+        "g:/ringenv/templates/android/recipes",
+        "C:/ring/tools/ringpm/packages/ringenv/templates/android/recipes",
+        getHomeDir() + "/.ringenv/templates/android/recipes"
     ]
-    for cCand in aCandNames
-        if direxists(cHost + "/extensions/" + cCand)
-            cExtHost = cHost + "/extensions/" + cCand
-            exit
+    for cCand in aCandidates
+        if direxists(cCand)
+            return normalizePath(cCand)
         ok
     next
+    return ""
 
-    if cExtHost = ""
-        return false
-    ok
-
-    # Target directory in project
-    cDestExt = "src/cpp/ext/" + cLower
-    ensureAndroidNativeScaffold(cHost)
-    ensureDir(cDestExt)
-
-    # Check root and src/ subdirectory if present
-    aSourcesDirs = [cExtHost]
-    if direxists(cExtHost + "/src")
-        aSourcesDirs + (cExtHost + "/src")
-    ok
-
-    for cScanDir in aSourcesDirs
-        aItems = dir(cScanDir)
-        for aItem in aItems
-            cName = aItem[1]
-            cItemLower = lower(cName)
-            if right(cItemLower, 4) = ".bat" or right(cItemLower, 3) = ".sh" or right(cItemLower, 3) = ".cf"
-                loop
-            ok
-            if right(cItemLower, 2) = ".c" or right(cItemLower, 4) = ".cpp" or
-               right(cItemLower, 2) = ".h" or right(cItemLower, 4) = ".hpp" or
-               right(cItemLower, 3) = ".rh"
-                copyFile(cScanDir + "/" + cName, cDestExt + "/" + cName)
-            but direxists(cScanDir + "/" + cName)
-                if cName != "." and cName != ".." and cName != "test" and cName != "tests" and cName != "build"
-                    copyFolder(cScanDir + "/" + cName, cDestExt + "/" + cName)
-                ok
-            ok
-            if right(cItemLower, 5) = ".ring"
-                cRingSrc = read(cScanDir + "/" + cName)
-                if substr(lower(cRingSrc), "isandroid()") = 0 and substr(lower(cRingSrc), "loadlib(") > 0
-                    # Handle CRLF endings
-                    if substr(cRingSrc, "else" + char(13) + char(10) + char(9) + "LoadLib(") > 0
-                        cRingSrc = substr(cRingSrc,
-                            "else" + char(13) + char(10) + char(9) + "LoadLib(",
-                            "but isUnix() and not (isAndroid() or isMacOSX())" + char(13) + char(10) + char(9) + "LoadLib(")
-                    # Handle LF-only endings
-                    but substr(cRingSrc, "else" + nl + char(9) + "LoadLib(") > 0
-                        cRingSrc = substr(cRingSrc,
-                            "else" + nl + char(9) + "LoadLib(",
-                            "but isUnix() and not (isAndroid() or isMacOSX())" + nl + char(9) + "LoadLib(")
-                    # Fallback: add isAndroid branch at top
-                    but substr(cRingSrc, "if iswindows()") > 0
-                        cRingSrc = substr(cRingSrc, "if iswindows()", "if isandroid()" + nl + char(9) + "# Statically compiled into libmain.so" + nl + "but iswindows()")
-                    ok
-                ok
-                if direxists("ring") write("ring/" + cName, cRingSrc) ok
-                if direxists("src") write("src/" + cName, cRingSrc) ok
-            ok
-        next
-    next
-
-    return true
-
-# Dynamically patch a single Ring wrapper file for Android LoadLib safety
-func patchRingFileForAndroid cFilePath
-    if not fexists(cFilePath) return ok
-    cCode = read(cFilePath)
+# Dynamically patch Ring code string for Android LoadLib safety
+func patchRingCodeString cCode
     cLower = lower(cCode)
-    if substr(cLower, "loadlib(") = 0 return ok
-    if substr(cLower, "isandroid()") > 0 return ok
-
-    # Strategy: Replace `else` + LoadLib("libring...so") with
-    #           `but isUnix() and not (isAndroid() or isMacOSX())` + LoadLib(...)
-    # This matches the ring2apk example pattern exactly.
-    # Must handle both \r\n and \n line endings.
+    if substr(cLower, "loadlib(") = 0 return cCode ok
+    if substr(cLower, "isandroid()") > 0 return cCode ok
 
     lPatched = false
 
@@ -817,15 +690,22 @@ func patchRingFileForAndroid cFilePath
         lPatched = true
     ok
 
-    # Pattern 3: "if iswindows()" without any isAndroid guard -> add isAndroid branch at top
+    # Pattern 3: "if iswindows()" without any isAndroid guard
     if not lPatched and substr(cCode, "if iswindows()") > 0
         cCode = substr(cCode, "if iswindows()",
             "if isandroid()" + nl + char(9) + "# Statically compiled into libmain.so" + nl + "but iswindows()")
         lPatched = true
     ok
 
-    if lPatched
-        write(cFilePath, cCode)
+    return cCode
+
+# Dynamically patch a single Ring wrapper file for Android LoadLib safety
+func patchRingFileForAndroid cFilePath
+    if not fexists(cFilePath) return ok
+    cCode = read(cFilePath)
+    cPatched = patchRingCodeString(cCode)
+    if cPatched != cCode
+        write(cFilePath, cPatched)
     ok
 
 # Recursively patch all Ring files in a directory tree for Android compatibility
@@ -851,6 +731,7 @@ func ensureAndroidNativeScaffold cHost
     ensureDir("src/cpp")
     ensureDir("src/cpp/ext")
     ensureDir("src/cpp/cmake")
+    ensureDir("src/cpp/recipes")
     ensureDir("src/cpp/ring")
 
     # 1. RingExtensions.cmake & ext.c.in
@@ -932,7 +813,7 @@ func ensureAndroidNativeScaffold cHost
         write("src/cpp/main.c", cMain)
     ok
 
-    # 4. CMakeLists.txt configured for RingExtensions
+    # 4. Dynamic CMakeLists.txt configured for RingExtensions and auto-discovered recipes
     if not fexists("src/cpp/CMakeLists.txt")
         cCMake = 'cmake_minimum_required(VERSION 3.22)' + nl +
                  'project(ringapp C CXX)' + nl + nl +
@@ -957,15 +838,31 @@ func ensureAndroidNativeScaffold cHost
                  '    ${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c' + nl +
                  ')' + nl +
                  'target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})' + nl + nl +
+                 '# Extension recipe accumulators' + nl +
+                 'set(RING_EXT_SOURCES "")' + nl +
+                 'set(RING_EXT_INCLUDES "")' + nl +
+                 'set(RING_EXT_LIBS "")' + nl +
+                 'set(RING_EXT_CXX_STANDARD "")' + nl + nl +
+                 '# Auto-include all extension recipes' + nl +
+                 'file(GLOB RECIPE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/recipes/*.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/recipes/*.cmake")' + nl +
+                 'foreach(recipe ${RECIPE_FILES})' + nl +
+                 '    include(${recipe})' + nl +
+                 'endforeach()' + nl + nl +
+                 'if(RING_EXT_CXX_STANDARD)' + nl +
+                 '    set(CMAKE_CXX_STANDARD ${RING_EXT_CXX_STANDARD})' + nl +
+                 '    set(CMAKE_CXX_STANDARD_REQUIRED ON)' + nl +
+                 'endif()' + nl + nl +
                  'add_library(main SHARED' + nl +
                  '    main.c' + nl +
                  '    ${CMAKE_SOURCE_DIR}/../../build/gen/ringappcode.c' + nl +
+                 '    ${RING_EXT_SOURCES}' + nl +
                  ')' + nl + nl +
                  'target_include_directories(main PRIVATE' + nl +
                  '    ${CMAKE_CURRENT_SOURCE_DIR}' + nl +
                  '    ${CMAKE_SOURCE_DIR}/../../build/gen' + nl +
                  '    ${RING_DIR}/include' + nl +
                  '    ${NATIVE_APP_GLUE_DIR}' + nl +
+                 '    ${RING_EXT_INCLUDES}' + nl +
                  ')' + nl + nl +
                  'target_link_libraries(main PRIVATE' + nl +
                  '    ring' + nl +
@@ -974,9 +871,155 @@ func ensureAndroidNativeScaffold cHost
                  '    -Wl,--no-whole-archive' + nl +
                  '    android' + nl +
                  '    log' + nl +
+                 '    ${RING_EXT_LIBS}' + nl +
                  ')' + nl + nl +
                  'set(RING_EXT_EXCLUDE tinycthread.c)' + nl +
                  'ring_target_add_extensions(main)' + nl
         write("src/cpp/CMakeLists.txt", cCMake)
     ok
+
+# Harvest C/C++ extension wrapper from host into src/cpp/ext/ and deploy CMake recipes for Android libmain.so
+func harvestAndroidNative cHost, cLib
+    cLower = lower(trim(cLib))
+    # Strip leading ring_ or ring if user specified
+    if left(cLower, 5) = "ring_"
+        cLower = substr(cLower, 6)
+    but left(cLower, 4) = "ring"
+        cLower = substr(cLower, 5)
+    ok
+
+    ensureAndroidNativeScaffold(cHost)
+    ensureDir("src/cpp/recipes")
+
+    lFoundAnything = false
+
+    # 1. Check if a dynamic CMake recipe exists in ringenv templates
+    cRecipesDir = getAndroidRecipesTemplateDir()
+    cRecipeFile = ""
+    if cRecipesDir != "" and fexists(cRecipesDir + "/" + cLower + ".cmake")
+        cRecipeFile = cRecipesDir + "/" + cLower + ".cmake"
+    ok
+
+    if cRecipeFile != ""
+        copyFile(cRecipeFile, "src/cpp/recipes/" + cLower + ".cmake")
+        ? "  " + uiStyle("[✔] Deployed Android CMake recipe: ", C_BGREEN) + uiStyle("recipes/" + cLower + ".cmake", C_BOLD + C_WHITE)
+        lFoundAnything = true
+    ok
+
+    # 2. Check for companion ring2apk package example (e.g. raylib, webview) for bindings and wrapper files
+    cRing2ApkPkg = cHost + "/tools/ringpm/packages/ring2apk"
+    cVenvDir = getTargetVenvDir()
+    aRing2ApkCands = [
+        cVenvDir + "/tools/ringpm/packages/ring2apk/examples/" + cLower,
+        cRing2ApkPkg + "/examples/" + cLower,
+        "tools/ringpm/packages/ring2apk/examples/" + cLower,
+        "C:/ring/tools/ringpm/packages/ring2apk/examples/" + cLower
+    ]
+    cExampleDir = ""
+    for cCand in aRing2ApkCands
+        if direxists(cCand)
+            cExampleDir = cCand
+            exit
+        ok
+    next
+
+    if cExampleDir != ""
+        # Copy binding source files if present in example src/cpp (e.g. ring_raylib.c)
+        if direxists(cExampleDir + "/src/cpp")
+            aCppFiles = dir(cExampleDir + "/src/cpp")
+            for aItem in aCppFiles
+                cName = aItem[1]
+                if cName = "." or cName = ".." loop ok
+                if aItem[2] = 0 and (right(lower(cName), 2) = ".c" or right(lower(cName), 4) = ".cpp")
+                    if cName != "main.c"
+                        copyFile(cExampleDir + "/src/cpp/" + cName, "src/cpp/" + cName)
+                    ok
+                ok
+            next
+        ok
+
+        # Copy Ring wrapper files (e.g. raylib.ring, classes.ring, etc.)
+        if direxists(cExampleDir + "/ring")
+            aRingFiles = dir(cExampleDir + "/ring")
+            for aItem in aRingFiles
+                cName = aItem[1]
+                if cName = "." or cName = ".." loop ok
+                if aItem[2] loop ok
+                if cName = "main.ring" loop ok
+                if right(lower(cName), 5) = ".ring" or right(lower(cName), 3) = ".rh"
+                    if direxists("src") copyFile(cExampleDir + "/ring/" + cName, "src/" + cName) ok
+                    if direxists("ring") copyFile(cExampleDir + "/ring/" + cName, "ring/" + cName) ok
+                ok
+            next
+        ok
+        lFoundAnything = true
+    ok
+
+    # 3. Locate source in host extensions (support ring<lib>, ring<lib>5, ringlib<lib>, <lib>)
+    cExtHost = ""
+    aCandNames = [
+        "ring" + cLower,
+        "ring" + cLower + "5",
+        "ringlib" + cLower,
+        cLower
+    ]
+    for cCand in aCandNames
+        if direxists(cHost + "/extensions/" + cCand)
+            cExtHost = cHost + "/extensions/" + cCand
+            exit
+        ok
+    next
+
+    if cExtHost != ""
+        # Target directory in project
+        cDestExt = "src/cpp/ext/" + cLower
+        ensureDir(cDestExt)
+
+        aSourcesDirs = [cExtHost]
+        if direxists(cExtHost + "/src")
+            aSourcesDirs + (cExtHost + "/src")
+        ok
+        if direxists(cExtHost + "/include")
+            aSourcesDirs + (cExtHost + "/include")
+        ok
+
+        for cScanDir in aSourcesDirs
+            aItems = dir(cScanDir)
+            for aItem in aItems
+                cName = aItem[1]
+                cItemLower = lower(cName)
+                if right(cItemLower, 4) = ".bat" or right(cItemLower, 3) = ".sh" or right(cItemLower, 3) = ".cf"
+                    loop
+                ok
+                if right(cItemLower, 2) = ".c" or right(cItemLower, 4) = ".cpp" or
+                   right(cItemLower, 2) = ".h" or right(cItemLower, 4) = ".hpp" or
+                   right(cItemLower, 3) = ".rh"
+                    copyFile(cScanDir + "/" + cName, cDestExt + "/" + cName)
+                but direxists(cScanDir + "/" + cName)
+                    if cName != "." and cName != ".." and cName != "test" and cName != "tests" and cName != "build"
+                        copyFolder(cScanDir + "/" + cName, cDestExt + "/" + cName)
+                    ok
+                ok
+                if right(cItemLower, 5) = ".ring"
+                    cRingSrc = read(cScanDir + "/" + cName)
+                    cRingSrc = patchRingCodeString(cRingSrc)
+                    if direxists("ring") write("ring/" + cName, cRingSrc) ok
+                    if direxists("src") write("src/" + cName, cRingSrc) ok
+                ok
+            next
+        next
+
+        lFoundAnything = true
+    ok
+
+    # Also check and copy Ring wrapper files from host bin/load/ or libraries/ if exists
+    if fexists(cHost + "/bin/load/" + cLower + ".ring")
+        cWrapperCode = read(cHost + "/bin/load/" + cLower + ".ring")
+        cWrapperCode = patchRingCodeString(cWrapperCode)
+        if direxists("src") write("src/" + cLower + ".ring", cWrapperCode) ok
+        if direxists("ring") write("ring/" + cLower + ".ring", cWrapperCode) ok
+        lFoundAnything = true
+    ok
+
+    return lFoundAnything
 

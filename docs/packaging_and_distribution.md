@@ -388,13 +388,15 @@ ringenv build qtmobile
 
 ## 6. Host Library Harvester (`ringenv harvest`)
 
-Virtual environments often require built-in libraries, GUI frameworks, or C wrappers already present in the host Ring installation (e.g. `C:\ring`). `ringenv harvest` imports them cleanly without manual file copying:
+Virtual environments and Android native builds often require built-in libraries, GUI frameworks, or C/C++ extensions from the host Ring installation (e.g. `C:\ring`). `ringenv harvest` imports them cleanly and prepares all necessary native bindings without manual file copying:
 
-```bash
+### Basic & Desktop Environment Usage
+
+```shell
 # Import Qt GUI runtime, RingQt DLLs, and platform plugins
 ringenv harvest guilib
 
-# Import game engine or async runtimes
+# Import game engine, multi-threading, or async runtimes
 ringenv harvest raylib
 ringenv harvest threads
 ringenv harvest libuv
@@ -405,10 +407,49 @@ ringenv harvest scan
 # Import dependencies declared in a manifest file (e.g. env_packages.txt)
 ringenv harvest -f env_packages.txt
 
-# Import C/C++ extension wrappers for Android NDK compilation
+# List available harvestable libraries
+ringenv harvest list
+```
+
+---
+
+### Android Native Extension Harvester (`--android`)
+
+Android statically links Ring extensions directly into `libmain.so` (since dynamic `LoadLib` is not supported on Android NDK). `ringenv harvest <lib> --android` automates the entire native pipeline:
+
+```shell
+# Pure C extensions (Zero-configuration)
 ringenv harvest sqlite --android
 ringenv harvest cjson --android
+ringenv harvest zip --android
+ringenv harvest stbimage --android
+ringenv harvest sockets --android
+
+# Complex third-party native libraries & engines (Auto-deployed CMake Recipes)
+ringenv harvest raylib --android
+ringenv harvest curl --android
+ringenv harvest webview --android
+ringenv harvest httplib --android
+ringenv harvest libuv --android
+ringenv harvest openssl --android
+ringenv harvest glaze --android
 ```
+
+#### How the Android Pipeline Works:
+
+1. **Scaffolding & CMake Generation**: Ensures `src/cpp/`, `src/cpp/ext/`, `src/cpp/recipes/`, Ring VM source files, `main.c`, and a dynamic `src/cpp/CMakeLists.txt` are created.
+2. **Zero-Config Pure C Extensions**: In-tree extensions (`sqlite`, `cjson`, `zip`, `threads`, `stbimage`, `sockets`, `pdfgen`, etc.) are placed in `src/cpp/ext/<name>/` and automatically detected, compiled, and registered into `libmain.so` via `ring_target_add_extensions(main)`.
+3. **Dynamic CMake Recipes (`src/cpp/recipes/*.cmake`)**:
+   Complex libraries that require cloning third-party sources or special compiler flags are managed via self-contained CMake recipes:
+   - **`raylib.cmake`**: Auto-clones and compiles Raylib 5.0 + RayGUI 4.0, applies NDK 27+ fixes (`ALooper_pollOnce`), and links `EGL`, `GLESv2`, and `OpenSLES`.
+   - **`curl.cmake`**: Auto-clones and builds `libcurl` + `wolfSSL` for secure HTTPS requests.
+   - **`webview.cmake`**: Auto-clones and builds `ring_webview_android`.
+   - **`httplib.cmake`**: Configures `cpp-httplib` with C++17 support and zlib.
+   - **`libuv.cmake`**: Auto-clones and builds the `libuv` async event loop.
+   - **`openssl.cmake`**: Sets up wolfSSL in full OpenSSL compatibility mode.
+   - **`glaze.cmake`**: Header-only C++23 JSON library configuration.
+4. **Automatic `isAndroid()` LoadLib Patching**: Ring wrapper scripts (`.ring`) are automatically inspected and patched so that dynamic `LoadLib("...so")` calls are bypassed on Android while remaining fully functional on desktop platforms.
+5. **Custom Recipes**: You can add support for any custom C/C++ library by simply creating a `src/cpp/recipes/mylib.cmake` file that appends to `RING_EXT_SOURCES`, `RING_EXT_INCLUDES`, or `RING_EXT_LIBS`.
 
 ---
 

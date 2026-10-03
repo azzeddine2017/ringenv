@@ -50,6 +50,7 @@ Welcome to the official documentation for **ringenv**, the native isolated virtu
 | `ringenv remove <version>` | Uninstall and remove an installed Ring runtime |
 | `ringenv venv create <dir>` | Create an isolated virtual environment in `<dir>` |
 | `ringenv harvest <library>` | Harvest official host runtime libraries (`guilib`, `raylib`, etc.) |
+| `ringenv harvest <lib> --android` | Harvest C/C++ extensions and deploy CMake recipes for Android NDK `libmain.so` |
 | `ringenv harvest scan` | Scan current project for missing libraries and harvest them automatically |
 | `ringenv build desktop` | Package standalone desktop release with all runtime DLLs and Qt plugins |
 | `ringenv build apk` | Build Android APK package with dynamic native C extension auto-linking |

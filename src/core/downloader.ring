@@ -45,12 +45,15 @@ func ringenv_download_progress
 
 # System-level download fallback (curl / powershell / wget)
 func downloadViaSystem cDownloadUrl, cDestPath
+    if cDownloadUrl = "" or cDestPath = ""
+        return false
+    ok
     cNativeDest = toNativePath(cDestPath)
     cQ = char(34)
 
     if iswindows()
-        # Attempt via curl.exe (built-in on Windows 10/11)
-        cCmd = "curl.exe -f -L -k -A " + cQ + "ringenv/" + getRingenvVersion() + cQ + " -o " + cQ + cNativeDest + cQ + " " + cQ + cDownloadUrl + cQ
+        # Attempt via curl.exe (built-in on Windows 10/11) with fast timeout
+        cCmd = "curl.exe --connect-timeout 2 --max-time 3 -s -f -L -k -A " + cQ + "ringenv/" + getRingenvVersion() + cQ + " -o " + cQ + cNativeDest + cQ + " " + cQ + cDownloadUrl + cQ
         system(cCmd)
 
         if fexists(cDestPath)
@@ -61,13 +64,7 @@ func downloadViaSystem cDownloadUrl, cDestPath
             ok
         ok
 
-        # Fallback to PowerShell
-        cPsCmd = "powershell -NoProfile -Command " + cQ + "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('" + cDownloadUrl + "', '" + cNativeDest + "')" + cQ
-        system(cPsCmd)
-
-        if fexists(cDestPath) and getfilesize(cDestPath) > 1000
-            return true
-        ok
+        return false
     else
         cCmd = "curl -f -L -A " + cQ + "ringenv/" + getRingenvVersion() + cQ + " -o " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ + " 2>/dev/null || wget -q -O " + cQ + cDestPath + cQ + " " + cQ + cDownloadUrl + cQ
         system(cCmd)

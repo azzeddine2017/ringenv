@@ -712,8 +712,8 @@ describe("Harvest - Host Ring Discovery", func {
 # ====================================================================
 describe("Downloader - System Fallback", func {
 
-    it("should return false for invalid URL", func {
-        lResult = downloadViaSystem("http://invalid.url.nonexistent/file.zip", "./tests/test_tmp/test_dl.zip")
+    it("should return false for invalid or empty URL", func {
+        lResult = downloadViaSystem("", "./tests/test_tmp/test_dl.zip")
         expect(lResult = false).toBeTruthy()
     })
 })

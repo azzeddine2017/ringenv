@@ -199,10 +199,10 @@ func harvestRun aArgs
         but cArg = "--android" or cArg = "--native" or cArg = "-a"
             lAndroidMode = true
         but substr(cArg, "-f=") > 0
-            cManifestFile = substr(cArg, 4)
+            cManifestFile = substr(cArg, 4, len(cArg))
             lFileMode = true
         but substr(cArg, "--file=") > 0
-            cManifestFile = substr(cArg, 8)
+            cManifestFile = substr(cArg, 8, len(cArg))
             lFileMode = true
         but substr(cArg, 1, 1) != "-"
             aTargets + cArg
@@ -884,9 +884,9 @@ func harvestAndroidNative cHost, cLib
     cLower = lower(trim(cLib))
     # Strip leading ring_ or ring if user specified
     if left(cLower, 5) = "ring_"
-        cLower = substr(cLower, 6)
+        cLower = substr(cLower, 6, len(cLower))
     but left(cLower, 4) = "ring"
-        cLower = substr(cLower, 5)
+        cLower = substr(cLower, 5, len(cLower))
     ok
 
     ensureAndroidNativeScaffold(cHost)

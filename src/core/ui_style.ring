@@ -50,10 +50,10 @@ func isColorEnabled
     if sysget("NO_COLOR") != "" or sysget("TERM") = "dumb"
         return false
     ok
-    if not isglobal(:lGlobalColorEnabled)
-        lGlobalColorEnabled = true
+    if isglobal(:lGlobalColorEnabled)
+        return lGlobalColorEnabled
     ok
-    return lGlobalColorEnabled
+    return true
 
 # Enable or disable color output
 func setColorEnabled lEnabled
@@ -64,32 +64,36 @@ func uiStyle cText, cCode
     if not isColorEnabled()
         return cText
     ok
-    return cCode + cText + C_RESET
+    cReset = char(27) + "[0m"
+    if isglobal(:C_RESET) and C_RESET != NULL
+        cReset = C_RESET
+    ok
+    return cCode + cText + cReset
 
 # Semantic color helpers
 func uiSuccess cText
-    return uiStyle(cText, C_BOLD + C_BGREEN)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[92m")
 
 func uiError cText
-    return uiStyle(cText, C_BOLD + C_BRED)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[91m")
 
 func uiWarn cText
-    return uiStyle(cText, C_BOLD + C_BYELLOW)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[93m")
 
 func uiInfo cText
-    return uiStyle(cText, C_BOLD + C_BCYAN)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[96m")
 
 func uiAccent cText
-    return uiStyle(cText, C_BOLD + C_BMAGENTA)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[95m")
 
 func uiMuted cText
-    return uiStyle(cText, C_BBLACK)
+    return uiStyle(cText, char(27) + "[90m")
 
 func uiHighlight cText
-    return uiStyle(cText, C_BOLD + C_BWHITE)
+    return uiStyle(cText, char(27) + "[1m" + char(27) + "[97m")
 
 func uiAuthor cText
-    return uiStyle("@" + cText, C_BYELLOW)
+    return uiStyle("@" + cText, char(27) + "[93m")
 
 func uiBadge cText, cColor
     return uiStyle("[" + cText + "]", cColor)
@@ -97,13 +101,13 @@ func uiBadge cText, cColor
 # Render decorative header banner
 func uiBanner cTitle, cSubtitle
     cLine = "======================================================================"
-    ? uiStyle(cLine, C_CYAN)
-    ? "  " + uiStyle(cTitle, C_BOLD + C_BCYAN)
+    ? uiStyle(cLine, char(27) + "[36m")
+    ? "  " + uiStyle(cTitle, char(27) + "[1m" + char(27) + "[96m")
     if cSubtitle != ""
-        ? "  " + uiStyle(cSubtitle, C_DIM)
+        ? "  " + uiStyle(cSubtitle, char(27) + "[2m")
     ok
-    ? uiStyle(cLine, C_CYAN)
+    ? uiStyle(cLine, char(27) + "[36m")
 
 # Render section divider
 func uiDivider
-    ? uiStyle("----------------------------------------------------------------------", C_BBLACK)
+    ? uiStyle("----------------------------------------------------------------------", char(27) + "[90m")

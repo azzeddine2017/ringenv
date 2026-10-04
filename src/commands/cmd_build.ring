@@ -111,7 +111,7 @@ func parseConfigFile cFilePath
         nEq = substr(cTrimmed, "=")
         if nEq > 0
             cKey = lower(trim(substr(cTrimmed, 1, nEq - 1)))
-            cVal = trim(substr(cTrimmed, nEq + 1))
+            cVal = trim(substr(cTrimmed, nEq + 1, len(cTrimmed)))
             # Strip quotes if present
             if (substr(cVal, 1, 1) = '"' and substr(cVal, len(cVal), 1) = '"') or
                (substr(cVal, 1, 1) = "'" and substr(cVal, len(cVal), 1) = "'")
@@ -976,7 +976,7 @@ func getFileBaseName cPath
     next
     cFile = cNorm
     if nSlash > 0
-        cFile = substr(cNorm, nSlash + 1)
+        cFile = substr(cNorm, nSlash + 1, len(cNorm))
     ok
     nDot = 0
     for k = len(cFile) to 1 step -1
@@ -1096,7 +1096,7 @@ func analyzeAndHarvestAndroidDeps
         if find(aAutoHarvestTargets, cLoad) > 0
             cCleanName = cLoad
             if left(cCleanName, 4) = "ring"
-                cCleanName = substr(cCleanName, 5)
+                cCleanName = substr(cCleanName, 5, len(cCleanName))
             ok
             if cCleanName = "sqlitelib"
                 cCleanName = "sqlite"

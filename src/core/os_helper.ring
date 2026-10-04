@@ -4,13 +4,16 @@
 # Default global version (overridden by main.ring)
 cVersion = "1.1.0"
 
+func ismacos
+    return ismacosx()
+
 # Detect operating system platform name
 func getPlatformName
     if iswindows()
         return "windows"
     but islinux()
         return "linux"
-    but ismacos()
+    but ismacosx()
         return "macos"
     else
         return "unknown"
@@ -43,7 +46,7 @@ func getHomeDir
 
 # Normalize file path separators to standard forward slash
 func normalizePath cPath
-    cOut = substr(cPath, "\", "/")
+    cOut = substr(cPath, char(92), "/")
     # Remove trailing slash if present (except root)
     nLen = len(cOut)
     if nLen > 1 and substr(cOut, nLen, 1) = "/"
@@ -54,9 +57,9 @@ func normalizePath cPath
 # Convert path to native system separators
 func toNativePath cPath
     if iswindows()
-        return substr(cPath, "/", "\")
+        return substr(cPath, "/", char(92))
     else
-        return substr(cPath, "\", "/")
+        return substr(cPath, char(92), "/")
     ok
 
 # Resolve target path relative to caller working directory if not absolute
@@ -241,4 +244,4 @@ func deleteFolder cFolder
 
 # Get ringenv version
 func getRingenvVersion
-    return cVersion
+    return "1.1.0"

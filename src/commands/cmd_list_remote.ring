@@ -17,16 +17,16 @@ func parseReleaseTags cJson
     nPos = substr(cJson, cTarget)
 
     while nPos > 0
-        cSub = substr(cJson, nPos + nTargetLen)
+        cSub = substr(cJson, nPos + nTargetLen, len(cJson))
         nQuote1 = substr(cSub, '"')
         if nQuote1 > 0
-            cRest = substr(cSub, nQuote1 + 1)
+            cRest = substr(cSub, nQuote1 + 1, len(cSub))
             nQuote2 = substr(cRest, '"')
             if nQuote2 > 0
                 cTag = substr(cRest, 1, nQuote2 - 1)
                 # Strip leading 'v' or 'V' prefix if present
                 if len(cTag) > 1 and (substr(cTag, 1, 1) = "v" or substr(cTag, 1, 1) = "V")
-                    cTag = substr(cTag, 2)
+                    cTag = substr(cTag, 2, len(cTag))
                 ok
                 if find(aTags, cTag) = 0 and len(cTag) > 0
                     aTags + cTag

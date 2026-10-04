@@ -104,7 +104,7 @@ func resolveCategoryAlias cInput
     cLow = lower(trim(cInput))
     # Strip leading dashes if provided like --category or -c
     while len(cLow) > 0 and substr(cLow, 1, 1) = "-"
-        cLow = substr(cLow, 2)
+        cLow = substr(cLow, 2, len(cLow))
     end
 
     aCats = getCategoriesInfo()

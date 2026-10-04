@@ -161,17 +161,17 @@ func extractRegistryField cBlock, cFieldName
     if nPos = 0
         return ""
     ok
-    cSub = substr(cBlock, nPos)
+    cSub = substr(cBlock, nPos, len(cBlock))
     nEqual = substr(cSub, "=")
     if nEqual = 0
         return ""
     ok
-    cAfterEqual = substr(cSub, nEqual + 1)
+    cAfterEqual = substr(cSub, nEqual + 1, len(cSub))
     nQ1 = substr(cAfterEqual, '"')
     if nQ1 = 0
         return ""
     ok
-    cAfterQ1 = substr(cAfterEqual, nQ1 + 1)
+    cAfterQ1 = substr(cAfterEqual, nQ1 + 1, len(cAfterEqual))
     nQ2 = substr(cAfterQ1, '"')
     if nQ2 = 0
         return ""
@@ -229,7 +229,7 @@ func parseRemoteRegistry cContent
     nStart = substr(cContent, "[")
 
     while nStart > 0
-        cSub = substr(cContent, nStart + 1)
+        cSub = substr(cContent, nStart + 1, len(cContent))
         nEnd = substr(cSub, "]")
         if nEnd = 0
             exit
@@ -952,7 +952,7 @@ func extractReadmeOverview cContent
 
         # Clean blockquote quote character '>'
         if substr(cTrimmed, 1, 1) = ">"
-            cTrimmed = trim(substr(cTrimmed, 2))
+            cTrimmed = trim(substr(cTrimmed, 2, len(cTrimmed)))
         ok
 
         if cTrimmed != ""

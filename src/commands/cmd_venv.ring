@@ -274,7 +274,7 @@ func cmdVenv aArgs
                 cVersion = aArgs[i]
             ok
         but substr(cArg, "--version=") > 0
-            cVersion = substr(cArg, 11)
+            cVersion = substr(cArg, 11, len(cArg))
         but cArg = "--clear"
             lClear = true
         but substr(cArg, 1, 1) != "-"

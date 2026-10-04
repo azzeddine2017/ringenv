@@ -591,7 +591,8 @@ func harvestScan
             if substr(cLowerLine, "load ") = 1
                 nQ1 = substr(cTrim, '"')
                 if nQ1 > 0
-                    nQ2 = substr(substr(cTrim, nQ1 + 1), '"')
+                    cAfterQ1 = substr(cTrim, nQ1 + 1, len(cTrim))
+                    nQ2 = substr(cAfterQ1, '"')
                     if nQ2 > 0
                         cLoaded = substr(cTrim, nQ1 + 1, nQ2 - 1)
                         cLoaded = lower(trim(cLoaded))

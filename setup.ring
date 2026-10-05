@@ -244,5 +244,3 @@ func getFilenameOnly cPath
     ok
     return cNorm
 
-func windowsNl
-    return char(13) + char(10)

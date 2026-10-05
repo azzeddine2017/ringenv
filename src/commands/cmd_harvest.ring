@@ -980,6 +980,9 @@ func harvestAndroidNative cHost, cLib
         if direxists(cExtHost + "/src")
             aSourcesDirs + (cExtHost + "/src")
         ok
+        if direxists(cExtHost + "/lib")
+            aSourcesDirs + (cExtHost + "/lib")
+        ok
         if direxists(cExtHost + "/include")
             aSourcesDirs + (cExtHost + "/include")
         ok
@@ -1001,11 +1004,27 @@ func harvestAndroidNative cHost, cLib
                         copyFolder(cScanDir + "/" + cName, cDestExt + "/" + cName)
                     ok
                 ok
+                if right(cItemLower, 3) = ".rh"
+                    if direxists("ring") copyFile(cScanDir + "/" + cName, "ring/" + cName) ok
+                    if direxists("src") copyFile(cScanDir + "/" + cName, "src/" + cName) ok
+                ok
                 if right(cItemLower, 5) = ".ring"
                     cRingSrc = read(cScanDir + "/" + cName)
                     cRingSrc = patchRingCodeString(cRingSrc)
                     if direxists("ring") write("ring/" + cName, cRingSrc) ok
                     if direxists("src") write("src/" + cName, cRingSrc) ok
+
+                    # Auto-alias common naming conventions (e.g. cjson <-> cjsonlib, zip <-> ziplib, sqlite <-> sqlitelib)
+                    if cItemLower = "cjson.ring"
+                        if direxists("ring") write("ring/cjsonlib.ring", cRingSrc) ok
+                        if direxists("src") write("src/cjsonlib.ring", cRingSrc) ok
+                    but cItemLower = "ziplib.ring"
+                        if direxists("ring") write("ring/zip.ring", cRingSrc) ok
+                        if direxists("src") write("src/zip.ring", cRingSrc) ok
+                    but cItemLower = "sqlitelib.ring"
+                        if direxists("ring") write("ring/sqlite.ring", cRingSrc) ok
+                        if direxists("src") write("src/sqlite.ring", cRingSrc) ok
+                    ok
                 ok
             next
         next
@@ -1014,13 +1033,16 @@ func harvestAndroidNative cHost, cLib
     ok
 
     # Also check and copy Ring wrapper files from host bin/load/ or libraries/ if exists
-    if fexists(cHost + "/bin/load/" + cLower + ".ring")
-        cWrapperCode = read(cHost + "/bin/load/" + cLower + ".ring")
-        cWrapperCode = patchRingCodeString(cWrapperCode)
-        if direxists("src") write("src/" + cLower + ".ring", cWrapperCode) ok
-        if direxists("ring") write("ring/" + cLower + ".ring", cWrapperCode) ok
-        lFoundAnything = true
-    ok
+    aLoadCandFiles = [cLower + ".ring", cLower + "lib.ring", "ring" + cLower + ".ring"]
+    for cLdr in aLoadCandFiles
+        if fexists(cHost + "/bin/load/" + cLdr)
+            cWrapperCode = read(cHost + "/bin/load/" + cLdr)
+            cWrapperCode = patchRingCodeString(cWrapperCode)
+            if direxists("src") write("src/" + cLdr, cWrapperCode) ok
+            if direxists("ring") write("ring/" + cLdr, cWrapperCode) ok
+            lFoundAnything = true
+        ok
+    next
 
     return lFoundAnything
 

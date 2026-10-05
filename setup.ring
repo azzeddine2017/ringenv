@@ -253,12 +253,3 @@ func getFilenameOnly cPath
         return substr(cNorm, nPos + 1)
     ok
     return cNorm
-
-func endsWith cStr, cSub
-    if len(cSub) > len(cStr)
-        return false
-    ok
-    return right(cStr, len(cSub)) = cSub
-
-func windowsNl
-    return char(13) + char(10)

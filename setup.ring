@@ -110,15 +110,25 @@ func installLauncher cRingBin, cTargetPkg
         cLauncherPath = cRingBin + "/ringenv.bat"
         cContent = '@echo off' + windowsNl() +
                    'rem ringenv CLI launcher' + windowsNl() +
-                   'ring "%~dp0..\tools\ringpm\packages\ringenv\main.ring" %*' + windowsNl()
+                   'set "RINGENV_CALLER_DIR=%CD%"' + windowsNl() +
+                   'pushd "%~dp0..\tools\ringpm\packages\ringenv"' + windowsNl() +
+                   'ring main.ring %*' + windowsNl() +
+                   'set "EXIT_CODE=%ERRORLEVEL%"' + windowsNl() +
+                   'popd' + windowsNl() +
+                   'exit /b %EXIT_CODE%' + windowsNl()
         write(cLauncherPath, cContent)
         ? "Installed Windows launcher: " + cLauncherPath
     else
         cLauncherPath = cRingBin + "/ringenv"
         cContent = '#!/usr/bin/env bash' + char(10) +
                    '# ringenv CLI launcher' + char(10) +
+                   'export RINGENV_CALLER_DIR="$(pwd)"' + char(10) +
                    'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"' + char(10) +
-                   'ring "$SCRIPT_DIR/../tools/ringpm/packages/ringenv/main.ring" "$@"' + char(10)
+                   'cd "$SCRIPT_DIR/../tools/ringpm/packages/ringenv"' + char(10) +
+                   'ring main.ring "$@"' + char(10) +
+                   'EXIT_CODE=$?' + char(10) +
+                   'cd "$RINGENV_CALLER_DIR"' + char(10) +
+                   'exit $EXIT_CODE' + char(10)
         write(cLauncherPath, cContent)
         system('chmod +x "' + cLauncherPath + '"')
         ? "Installed Unix launcher: " + cLauncherPath
@@ -244,3 +254,11 @@ func getFilenameOnly cPath
     ok
     return cNorm
 
+func endsWith cStr, cSub
+    if len(cSub) > len(cStr)
+        return false
+    ok
+    return right(cStr, len(cSub)) = cSub
+
+func windowsNl
+    return char(13) + char(10)

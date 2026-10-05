@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="RingTest" tests="98" failures="0" errors="0" time="1.89">
+  <testsuite name="OS Helper - Platform Detection" tests="6" failures="0" errors="0" time="0">
+    <testcase name="should return a known platform name" classname="OS Helper - Platform Detection" time="0"/>
+    <testcase name="should return correct binary name for platform" classname="OS Helper - Platform Detection" time="0"/>
+    <testcase name="should resolve home directory to non-empty string" classname="OS Helper - Platform Detection" time="0"/>
+    <testcase name="should resolve ringenv directory containing .ringenv" classname="OS Helper - Platform Detection" time="0"/>
+    <testcase name="should resolve versions directory containing &apos;versions&apos;" classname="OS Helper - Platform Detection" time="0"/>
+    <testcase name="should resolve cache directory containing &apos;cache&apos;" classname="OS Helper - Platform Detection" time="0"/>
+  </testsuite>
+  <testsuite name="OS Helper - Path Normalization" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should normalize backslashes to forward slashes" classname="OS Helper - Path Normalization" time="0"/>
+    <testcase name="should remove trailing slash from path" classname="OS Helper - Path Normalization" time="0"/>
+    <testcase name="should keep root slash intact" classname="OS Helper - Path Normalization" time="0"/>
+    <testcase name="should convert to native path on Windows" classname="OS Helper - Path Normalization" time="0"/>
+  </testsuite>
+  <testsuite name="OS Helper - Directory Operations" tests="3" failures="0" errors="0" time="0.18">
+    <testcase name="should create nested directories with ensureDir" classname="OS Helper - Directory Operations" time="0.15"/>
+    <testcase name="should copy file content correctly" classname="OS Helper - Directory Operations" time="0.01"/>
+    <testcase name="should delete folder recursively" classname="OS Helper - Directory Operations" time="0.03"/>
+  </testsuite>
+  <testsuite name="OS Helper - Caller Path Resolution" tests="3" failures="0" errors="0" time="0">
+    <testcase name="should keep absolute Windows paths intact" classname="OS Helper - Caller Path Resolution" time="0"/>
+    <testcase name="should keep absolute Unix paths intact" classname="OS Helper - Caller Path Resolution" time="0"/>
+    <testcase name="should return relative path when no caller dir set" classname="OS Helper - Caller Path Resolution" time="0"/>
+  </testsuite>
+  <testsuite name="OS Helper - Version" tests="1" failures="0" errors="0" time="0">
+    <testcase name="should return ringenv version string" classname="OS Helper - Version" time="0"/>
+  </testsuite>
+  <testsuite name="UI Style - Color Constants" tests="2" failures="0" errors="0" time="0">
+    <testcase name="should define ANSI escape constants" classname="UI Style - Color Constants" time="0"/>
+    <testcase name="should have reset code ending with [0m" classname="UI Style - Color Constants" time="0"/>
+  </testsuite>
+  <testsuite name="UI Style - Styling Functions" tests="5" failures="0" errors="0" time="0">
+    <testcase name="should wrap text with style codes when color enabled" classname="UI Style - Styling Functions" time="0"/>
+    <testcase name="should return plain text when color disabled" classname="UI Style - Styling Functions" time="0"/>
+    <testcase name="should format badge with brackets" classname="UI Style - Styling Functions" time="0"/>
+    <testcase name="should apply semantic colors" classname="UI Style - Styling Functions" time="0"/>
+    <testcase name="should prepend @ to author name" classname="UI Style - Styling Functions" time="0"/>
+  </testsuite>
+  <testsuite name="Categories - Category Info" tests="3" failures="0" errors="0" time="0">
+    <testcase name="should return at least 9 categories" classname="Categories - Category Info" time="0"/>
+    <testcase name="should have data category with packages" classname="Categories - Category Info" time="0"/>
+    <testcase name="should return empty list for unknown category" classname="Categories - Category Info" time="0"/>
+  </testsuite>
+  <testsuite name="Categories - Alias Resolution" tests="11" failures="0" errors="0" time="0">
+    <testcase name="should map &apos;data&apos; to &apos;data&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;office&apos; to &apos;data&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;docs&apos; to &apos;data&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;web&apos; to &apos;web&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;api&apos; to &apos;web&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;db&apos; to &apos;database&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;games&apos; to &apos;gamedev&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;ai&apos; to &apos;ai-science&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;build&apos; to &apos;build&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should map &apos;apk&apos; to &apos;build&apos;" classname="Categories - Alias Resolution" time="0"/>
+    <testcase name="should return empty string for unknown alias" classname="Categories - Alias Resolution" time="0"/>
+  </testsuite>
+  <testsuite name="Categories - Package Membership" tests="6" failures="0" errors="0" time="0">
+    <testcase name="should find xlsxlib in data category" classname="Categories - Package Membership" time="0"/>
+    <testcase name="should find docxlib in data category" classname="Categories - Package Membership" time="0"/>
+    <testcase name="should find bolt in web category" classname="Categories - Package Membership" time="0"/>
+    <testcase name="should find ringquantum in ai-science category" classname="Categories - Package Membership" time="0"/>
+    <testcase name="should find ring2exe-plus in build category" classname="Categories - Package Membership" time="0"/>
+    <testcase name="should return false for package not in category" classname="Categories - Package Membership" time="0"/>
+  </testsuite>
+  <testsuite name="Categories - Package Category Lookup" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should identify xlsxlib as data" classname="Categories - Package Category Lookup" time="0"/>
+    <testcase name="should identify bolt as web" classname="Categories - Package Category Lookup" time="0"/>
+    <testcase name="should identify ring2exe-plus as build" classname="Categories - Package Category Lookup" time="0"/>
+    <testcase name="should return &apos;other&apos; for unknown package" classname="Categories - Package Category Lookup" time="0"/>
+  </testsuite>
+  <testsuite name="Hub - Curated Community Libraries" tests="3" failures="0" errors="0" time="0">
+    <testcase name="should return at least 10 curated libraries" classname="Hub - Curated Community Libraries" time="0"/>
+    <testcase name="should include xlsxlib by Azzeddine2017" classname="Hub - Curated Community Libraries" time="0"/>
+    <testcase name="should include ringquantum by Azzeddine2017" classname="Hub - Curated Community Libraries" time="0"/>
+  </testsuite>
+  <testsuite name="Hub - Registry Field Extraction" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should extract name field from registry block" classname="Hub - Registry Field Extraction" time="0"/>
+    <testcase name="should extract description field from registry block" classname="Hub - Registry Field Extraction" time="0"/>
+    <testcase name="should extract author case-insensitively" classname="Hub - Registry Field Extraction" time="0"/>
+    <testcase name="should return empty string for missing field" classname="Hub - Registry Field Extraction" time="0"/>
+  </testsuite>
+  <testsuite name="Hub - Library Resolution" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should resolve library by numeric index" classname="Hub - Library Resolution" time="0"/>
+    <testcase name="should resolve library by name with hyphen" classname="Hub - Library Resolution" time="0"/>
+    <testcase name="should return empty list for out-of-range index" classname="Hub - Library Resolution" time="0"/>
+    <testcase name="should return empty list for non-existent name" classname="Hub - Library Resolution" time="0"/>
+  </testsuite>
+  <testsuite name="Hub - Community vs Official Filtering" tests="5" failures="0" errors="0" time="0.01">
+    <testcase name="should identify community library by author" classname="Hub - Community vs Official Filtering" time="0"/>
+    <testcase name="should identify official library by ringpackages author" classname="Hub - Community vs Official Filtering" time="0"/>
+    <testcase name="should filter community libraries correctly" classname="Hub - Community vs Official Filtering" time="0"/>
+    <testcase name="should filter official libraries correctly" classname="Hub - Community vs Official Filtering" time="0"/>
+    <testcase name="should return all libraries in &apos;all&apos; mode" classname="Hub - Community vs Official Filtering" time="0"/>
+  </testsuite>
+  <testsuite name="Hub - README Overview Extraction" tests="2" failures="0" errors="0" time="0">
+    <testcase name="should extract body text before H2 header" classname="Hub - README Overview Extraction" time="0"/>
+    <testcase name="should stop extraction before Installation section" classname="Hub - README Overview Extraction" time="0"/>
+  </testsuite>
+  <testsuite name="Venv - Base Name Extraction" tests="3" failures="0" errors="0" time="0">
+    <testcase name="should extract base name from simple path" classname="Venv - Base Name Extraction" time="0"/>
+    <testcase name="should extract base name from relative path" classname="Venv - Base Name Extraction" time="0"/>
+    <testcase name="should return &apos;rvenv&apos; for empty path" classname="Venv - Base Name Extraction" time="0"/>
+  </testsuite>
+  <testsuite name="Venv - Activation Scripts" tests="8" failures="0" errors="0" time="0.31">
+    <testcase name="should create bin/activate script" classname="Venv - Activation Scripts" time="0.22"/>
+    <testcase name="should create Scripts/activate.bat on Windows" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should create Scripts/activate.ps1 on Windows" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should set RVENV_DIR in Unix activate script" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should set RINGPATH in Unix activate script" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should set RVENV_DIR in Windows activate.bat" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should set RINGPATH in Windows activate.bat" classname="Venv - Activation Scripts" time="0"/>
+    <testcase name="should cleanup test environment" classname="Venv - Activation Scripts" time="0.08"/>
+  </testsuite>
+  <testsuite name="Build - Config File Parsing" tests="5" failures="0" errors="0" time="0.01">
+    <testcase name="should parse source from config file" classname="Build - Config File Parsing" time="0.01"/>
+    <testcase name="should strip quotes from output value" classname="Build - Config File Parsing" time="0"/>
+    <testcase name="should parse boolean values as strings" classname="Build - Config File Parsing" time="0"/>
+    <testcase name="should return empty list for non-existent config file" classname="Build - Config File Parsing" time="0"/>
+    <testcase name="should cleanup test config" classname="Build - Config File Parsing" time="0"/>
+  </testsuite>
+  <testsuite name="Build - Scaffold Generator" tests="3" failures="0" errors="0" time="0.06">
+    <testcase name="should create ring2exe.conf for desktop scaffold" classname="Build - Scaffold Generator" time="0.03"/>
+    <testcase name="should create build scripts for desktop scaffold" classname="Build - Scaffold Generator" time="0"/>
+    <testcase name="should cleanup scaffold artifacts" classname="Build - Scaffold Generator" time="0.03"/>
+  </testsuite>
+  <testsuite name="List Remote - Release Tag Parsing" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should extract 3 tags from JSON response" classname="List Remote - Release Tag Parsing" time="0"/>
+    <testcase name="should strip &apos;v&apos; prefix from tag names" classname="List Remote - Release Tag Parsing" time="0"/>
+    <testcase name="should keep non-v prefix tag names" classname="List Remote - Release Tag Parsing" time="0"/>
+    <testcase name="should return empty list for empty JSON" classname="List Remote - Release Tag Parsing" time="0"/>
+  </testsuite>
+  <testsuite name="Extractor - Version Runtime Dir" tests="2" failures="0" errors="0" time="0.41">
+    <testcase name="should return same dir when binary exists directly" classname="Extractor - Version Runtime Dir" time="0.15"/>
+    <testcase name="should find nested runtime directory" classname="Extractor - Version Runtime Dir" time="0.26"/>
+  </testsuite>
+  <testsuite name="Install - Release Asset Naming" tests="4" failures="0" errors="0" time="0">
+    <testcase name="should return Windows asset name for Windows platform" classname="Install - Release Asset Naming" time="0"/>
+    <testcase name="should return Linux asset name for Linux platform" classname="Install - Release Asset Naming" time="0"/>
+    <testcase name="should return macOS asset name for macOS platform" classname="Install - Release Asset Naming" time="0"/>
+    <testcase name="should include version in asset name" classname="Install - Release Asset Naming" time="0"/>
+  </testsuite>
+  <testsuite name="Remove - Validation" tests="1" failures="0" errors="0" time="0">
+    <testcase name="should return false for non-existent version" classname="Remove - Validation" time="0"/>
+  </testsuite>
+  <testsuite name="Harvest - Host Ring Discovery" tests="1" failures="0" errors="0" time="0">
+    <testcase name="should locate a Ring installation or return empty" classname="Harvest - Host Ring Discovery" time="0"/>
+  </testsuite>
+  <testsuite name="Downloader - System Fallback" tests="1" failures="0" errors="0" time="0">
+    <testcase name="should return false for invalid or empty URL" classname="Downloader - System Fallback" time="0"/>
+  </testsuite>
+</testsuites>

@@ -72,6 +72,11 @@ if(NOT _RAYMATH MATCHES "MatrixNormalize")
     file(WRITE "${RAYLIB_PATCHED_DIR}/src/raymath.h" "${_RAYMATH}")
 endif()
 
+# Patch stb_image_resize2.h to disable buggy FP16/SIMD on 32-bit ARM (armeabi-v7a)
+file(READ "${RAYLIB_PATCHED_DIR}/src/external/stb_image_resize2.h" _STB_RESIZE)
+string(PREPEND _STB_RESIZE "#if (defined(__arm__) || defined(_M_ARM)) && !defined(__aarch64__)\n#ifndef STBIR_NO_SIMD\n#define STBIR_NO_SIMD 1\n#endif\n#endif\n")
+file(WRITE "${RAYLIB_PATCHED_DIR}/src/external/stb_image_resize2.h" "${_STB_RESIZE}")
+
 add_subdirectory(${RAYLIB_PATCHED_DIR} raylib-build)
 
 # Register with main target

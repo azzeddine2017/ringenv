@@ -19,20 +19,11 @@
 
 ## 2. Installation
 
-### Method A: Install via Ring Package Manager (`ringpm`)
+### Install via Ring Package Manager (`ringpm`)
 ```bash
 ringpm install ringenv from Azzeddine2017
 ```
 Once installed, the `ringenv` command is immediately available in your terminal.
-
-### Method B: Install from Local Source Repository (Pure Ring)
-Clone the repository and run the setup installer with Ring on any OS (Windows, Linux, macOS):
-
-```bash
-git clone https://github.com/Azzeddine2017/ringenv.git
-cd ringenv
-ring setup.ring
-```
 
 ---
 

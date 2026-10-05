@@ -84,27 +84,10 @@ ringenv/
 
 ## Installation
 
-### Method 1: Install via Ring Package Manager (`ringpm`)
+### Install via Ring Package Manager (`ringpm`)
 ```bash
 ringpm install ringenv from Azzeddine2017
 ```
-After installation, `ringenv` is immediately available in your terminal from any directory:
-```bash
-ringenv --version
-ringenv help
-```
-
-### Method 2: Local Installation (Pure Ring)
-To install the tool into your local Ring environment directly from this source repository on any operating system (Windows, Linux, or macOS):
-```bash
-ring setup.ring
-```
-To uninstall:
-```bash
-ring setup.ring remove
-```
-
----
 
 ## Command Reference
 

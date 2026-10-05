@@ -7,11 +7,11 @@ aPackageInfo = [
 	:developer = "Azzeddine Remmal",
 	:email = "azzeddine.remmal@gmail.com",
 	:license = "MIT License",
-	:version = "1.1.0",
+	:version = "1.1.1",
 	:ringversion = "1.27",
 	:versions = [
 		[
-			:version = "1.1.0",
+			:version = "1.1.1",
 			:branch = "master"
 		],
 		[

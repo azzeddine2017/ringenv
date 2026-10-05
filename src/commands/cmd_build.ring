@@ -1093,16 +1093,38 @@ func analyzeAndHarvestAndroidDeps
             lHasQt = true
         ok
 
-        if find(aAutoHarvestTargets, cLoad) > 0
-            cCleanName = cLoad
-            if left(cCleanName, 4) = "ring"
-                cCleanName = substr(cCleanName, 5, len(cCleanName))
-            ok
-            if cCleanName = "sqlitelib"
-                cCleanName = "sqlite"
-            ok
-            if not direxists("src/cpp/ext/" + cCleanName)
-                if harvestAndroidNative(cRingHost, cCleanName)
+        cCleanName = cLoad
+        if left(cCleanName, 4) = "ring"
+            cCleanName = substr(cCleanName, 5, len(cCleanName))
+        ok
+        if cCleanName = "raylib" or cCleanName = "raylib5"
+            cCleanName = "raylib"
+        but cCleanName = "libui"
+            cCleanName = "libui"
+        but cCleanName = "libuv" or cCleanName = "uv"
+            cCleanName = "libuv"
+        but right(cCleanName, 3) = "lib" and len(cCleanName) > 3
+            cCleanName = left(cCleanName, len(cCleanName) - 3)
+        ok
+        if cCleanName = "sql" or cCleanName = "sqlite"
+            cCleanName = "sqlite"
+        but cCleanName = "cjson"
+            cCleanName = "cjson"
+        but cCleanName = "zip"
+            cCleanName = "zip"
+        but cCleanName = "openssl" or cCleanName = "ssl"
+            cCleanName = "openssl"
+        but cCleanName = "raylib" or cCleanName = "raylib5" or cCleanName = "ray"
+            cCleanName = "raylib"
+        but cCleanName = "curl"
+            cCleanName = "curl"
+        but cCleanName = "uv" or cCleanName = "libuv"
+            cCleanName = "libuv"
+        ok
+
+        if find(aAutoHarvestTargets, cCleanName) > 0 or find(aAutoHarvestTargets, cLoad) > 0
+            if harvestAndroidNative(cRingHost, cCleanName)
+                if find(aHarvestedNow, cCleanName) = 0
                     aHarvestedNow + cCleanName
                 ok
             ok

@@ -94,17 +94,15 @@ ringenv --version
 ringenv help
 ```
 
-### Method 2: Local Installation (Development)
-To install the tool into your local Ring environment directly from this source repository:
-- **Windows**:
-  ```cmd
-  setup.bat
-  ```
-- **Linux / macOS**:
-  ```bash
-  chmod +x setup.sh
-  ./setup.sh
-  ```
+### Method 2: Local Installation (Pure Ring)
+To install the tool into your local Ring environment directly from this source repository on any operating system (Windows, Linux, or macOS):
+```bash
+ring setup.ring
+```
+To uninstall:
+```bash
+ring setup.ring remove
+```
 
 ---
 

@@ -80,6 +80,5 @@ file(WRITE "${RAYLIB_PATCHED_DIR}/src/external/stb_image_resize2.h" "${_STB_RESI
 add_subdirectory(${RAYLIB_PATCHED_DIR} raylib-build)
 
 # Register with main target
-list(APPEND RING_EXT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/ring_raylib.c")
 list(APPEND RING_EXT_INCLUDES "${RAYLIB_PATCHED_DIR}/src" "${RAYGUI_DIR}/src")
 list(APPEND RING_EXT_LIBS raylib EGL GLESv2 OpenSLES)

@@ -28,12 +28,9 @@ aPackageInfo = [
 	],
 	:files = [
 		"main.ring",
+		"setup.ring",
 		"README.md",
 		"package.ring",
-		"setup.bat",
-		"setup.sh",
-		"bin/ringenv.bat",
-		"bin/ringenv",
 		"src/core/ui_style.ring",
 		"src/core/os_helper.ring",
 		"src/core/categories.ring",
@@ -48,7 +45,7 @@ aPackageInfo = [
 		"src/commands/cmd_venv.ring",
 		"src/commands/cmd_build.ring",
 		"src/commands/cmd_harvest.ring",
-		"tests/test_ringenv.ring",
+		"tests/ringenv_test.ring",
 		"docs/README.md",
 		"docs/getting_started.md",
 		"docs/version_management.md",
@@ -69,22 +66,22 @@ aPackageInfo = [
 
 	],
 	:windowsringfolderfiles = [
-		"bin/ringenv.bat"
+
 	],
 	:linuxringfolderfiles = [
-		"bin/ringenv"
+
 	],
 	:macosringfolderfiles = [
-		"bin/ringenv"
+
 	],
 	:run = "ring main.ring",
-	:setup = "",
+	:setup = "ring setup.ring",
 	:windowssetup = "",
 	:linuxsetup = "",
 	:macossetup = "",
 	:ubuntusetup = "",
 	:fedorasetup = "",
-	:remove = "",
+	:remove = "ring setup.ring remove",
 	:windowsremove = "",
 	:linuxremove = "",
 	:macosremove = "",

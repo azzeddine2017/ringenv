@@ -8,7 +8,7 @@ Welcome to the official documentation for **ringenv**, the native isolated virtu
 
 1. [Getting Started](getting_started.md)
    - System requirements
-   - Installing via `ringpm` or source installer (`setup.bat` / `setup.sh`)
+   - Installing via `ringpm` or source installer (`setup.ring`)
    - Verifying your installation and platform detection
 
 2. [Version Management](version_management.md)

@@ -774,6 +774,7 @@ func ensureAndroidNativeScaffold cHost
                 '#include <pthread.h>' + nl + nl +
                 '#include "ring.h"' + nl +
                 '#include "ringappcode.h"' + nl + nl +
+                'extern struct android_app *GetAndroidApp(void) __attribute__((weak));' + nl + nl +
                 '#define LOG_TAG "RingApp"' + nl +
                 '#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)' + nl +
                 '#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)' + nl + nl +
@@ -797,25 +798,52 @@ func ensureAndroidNativeScaffold cHost
                 '    dup2(pfd[1], 2);' + nl +
                 '    pthread_create(&thr, 0, thread_func, 0);' + nl +
                 '}' + nl + nl +
-                'void android_main(struct android_app *app) {' + nl +
-                '    (void)app;' + nl +
+                'static const char *get_internal_path(void) {' + nl +
+                '    if (GetAndroidApp) {' + nl +
+                '        struct android_app *app = GetAndroidApp();' + nl +
+                '        if (app && app->activity && app->activity->internalDataPath)' + nl +
+                '            return app->activity->internalDataPath;' + nl +
+                '    }' + nl +
+                '    return "/data/local/tmp";' + nl +
+                '}' + nl + nl +
+                'int main(int argc, char *argv[]) {' + nl +
+                '    (void)argc;' + nl +
+                '    (void)argv;' + nl +
                 '    start_logger();' + nl +
-                '    LOGI("=== Ring App Starting ===");' + nl + nl +
+                '    LOGI("=== Ring App Starting ===");' + nl +
+                '    const char *basePath = get_internal_path();' + nl +
+                '    chdir(basePath);' + nl +
                 '    RingState *pState = ring_state_new();' + nl +
                 '    if (!pState) {' + nl +
                 '        LOGE("Failed to create Ring state");' + nl +
-                '        return;' + nl +
+                '        return 1;' + nl +
                 '    }' + nl +
                 '    pState->lRun = 1;' + nl +
                 '    ringappcode_run(pState);' + nl +
                 '    ring_state_delete(pState);' + nl +
                 '    LOGI("=== Ring App Finished ===");' + nl +
+                '    return 0;' + nl +
+                '}' + nl + nl +
+                'void android_main(struct android_app *app) __attribute__((weak));' + nl +
+                'void android_main(struct android_app *app) {' + nl +
+                '    (void)app;' + nl +
+                '    main(0, NULL);' + nl +
                 '}' + nl
         write("src/cpp/main.c", cMain)
     ok
 
     # 4. Dynamic CMakeLists.txt configured for RingExtensions and auto-discovered recipes
+    lNeedCMake = false
     if not fexists("src/cpp/CMakeLists.txt")
+        lNeedCMake = true
+    else
+        cExistingCMake = read("src/cpp/CMakeLists.txt")
+        if substr(cExistingCMake, "RingExtensions") = 0
+            lNeedCMake = true
+        ok
+    ok
+
+    if lNeedCMake
         cCMake = 'cmake_minimum_required(VERSION 3.22)' + nl +
                  'project(ringapp C CXX)' + nl + nl +
                  'set(CMAKE_C_STANDARD 99)' + nl +
@@ -874,7 +902,7 @@ func ensureAndroidNativeScaffold cHost
                  '    log' + nl +
                  '    ${RING_EXT_LIBS}' + nl +
                  ')' + nl + nl +
-                 'set(RING_EXT_EXCLUDE tinycthread.c)' + nl +
+                 'set(RING_EXT_EXCLUDE tinycthread.c zip.c)' + nl +
                  'ring_target_add_extensions(main)' + nl
         write("src/cpp/CMakeLists.txt", cCMake)
     ok
@@ -887,6 +915,22 @@ func harvestAndroidNative cHost, cLib
         cLower = substr(cLower, 6, len(cLower))
     but left(cLower, 4) = "ring"
         cLower = substr(cLower, 5, len(cLower))
+    ok
+    if right(cLower, 3) = "lib" and len(cLower) > 3
+        cLower = left(cLower, len(cLower) - 3)
+    ok
+    if cLower = "sql" or cLower = "sqlite"
+        cLower = "sqlite"
+    but cLower = "cjson"
+        cLower = "cjson"
+    but cLower = "zip"
+        cLower = "zip"
+    but cLower = "raylib" or cLower = "raylib5"
+        cLower = "raylib"
+    but cLower = "openssl" or cLower = "ssl"
+        cLower = "openssl"
+    but cLower = "uv"
+        cLower = "libuv"
     ok
 
     ensureAndroidNativeScaffold(cHost)
@@ -933,7 +977,8 @@ func harvestAndroidNative cHost, cLib
                 if cName = "." or cName = ".." loop ok
                 if aItem[2] = 0 and (right(lower(cName), 2) = ".c" or right(lower(cName), 4) = ".cpp")
                     if cName != "main.c"
-                        copyFile(cExampleDir + "/src/cpp/" + cName, "src/cpp/" + cName)
+                        ensureDir("src/cpp/ext/" + cLower)
+                        copyFile(cExampleDir + "/src/cpp/" + cName, "src/cpp/ext/" + cLower + "/" + cName)
                     ok
                 ok
             next
@@ -976,6 +1021,26 @@ func harvestAndroidNative cHost, cLib
         cDestExt = "src/cpp/ext/" + cLower
         ensureDir(cDestExt)
 
+        # Automatically clean any legacy duplicate source files in subfolders (e.g. ext/cjson/lib/*.c)
+        if direxists(cDestExt + "/lib")
+            aLibSub = dir(cDestExt + "/lib")
+            for aSub in aLibSub
+                if aSub[2] = 0 and (right(lower(aSub[1]), 2) = ".c" or right(lower(aSub[1]), 4) = ".cpp")
+                    remove(cDestExt + "/lib/" + aSub[1])
+                ok
+            next
+        ok
+        if direxists(cDestExt + "/src")
+            aSrcSub = dir(cDestExt + "/src")
+            for aSub in aSrcSub
+                if aSub[2] = 0 and (right(lower(aSub[1]), 2) = ".c" or right(lower(aSub[1]), 4) = ".cpp")
+                    remove(cDestExt + "/src/" + aSub[1])
+                ok
+            next
+        ok
+        if fexists(cDestExt + "/test.c") remove(cDestExt + "/test.c") ok
+        if fexists(cDestExt + "/tests.c") remove(cDestExt + "/tests.c") ok
+
         aSourcesDirs = [cExtHost]
         if direxists(cExtHost + "/src")
             aSourcesDirs + (cExtHost + "/src")
@@ -995,13 +1060,23 @@ func harvestAndroidNative cHost, cLib
                 if right(cItemLower, 4) = ".bat" or right(cItemLower, 3) = ".sh" or right(cItemLower, 3) = ".cf"
                     loop
                 ok
-                if right(cItemLower, 2) = ".c" or right(cItemLower, 4) = ".cpp" or
-                   right(cItemLower, 2) = ".h" or right(cItemLower, 4) = ".hpp" or
-                   right(cItemLower, 3) = ".rh"
-                    copyFile(cScanDir + "/" + cName, cDestExt + "/" + cName)
-                but direxists(cScanDir + "/" + cName)
-                    if cName != "." and cName != ".." and cName != "test" and cName != "tests" and cName != "build"
-                        copyFolder(cScanDir + "/" + cName, cDestExt + "/" + cName)
+                if cItemLower = "test.c" or cItemLower = "tests.c" or cItemLower = "main.c" or cItemLower = "example.c"
+                    loop
+                ok
+                if right(cItemLower, 2) = ".c" or right(cItemLower, 4) = ".cpp"
+                    if not fexists(cDestExt + "/" + cName)
+                        copyFile(cScanDir + "/" + cName, cDestExt + "/" + cName)
+                    ok
+                but right(cItemLower, 2) = ".h" or right(cItemLower, 4) = ".hpp" or right(cItemLower, 3) = ".rh"
+                    if not fexists(cDestExt + "/" + cName)
+                        copyFile(cScanDir + "/" + cName, cDestExt + "/" + cName)
+                    ok
+                    if cScanDir = (cExtHost + "/lib")
+                        ensureDir(cDestExt + "/lib")
+                        copyFile(cScanDir + "/" + cName, cDestExt + "/lib/" + cName)
+                    but cScanDir = (cExtHost + "/include")
+                        ensureDir(cDestExt + "/include")
+                        copyFile(cScanDir + "/" + cName, cDestExt + "/include/" + cName)
                     ok
                 ok
                 if right(cItemLower, 3) = ".rh"
@@ -1009,6 +1084,10 @@ func harvestAndroidNative cHost, cLib
                     if direxists("src") copyFile(cScanDir + "/" + cName, "src/" + cName) ok
                 ok
                 if right(cItemLower, 5) = ".ring"
+                    if cItemLower = "gendoc.ring" or cItemLower = "test.ring" or cItemLower = "main.ring" or
+                       (left(cItemLower, 1) = "t" and len(cItemLower) <= 8 and isdigit(substr(cItemLower, 2, 1)))
+                        loop
+                    ok
                     cRingSrc = read(cScanDir + "/" + cName)
                     cRingSrc = patchRingCodeString(cRingSrc)
                     if direxists("ring") write("ring/" + cName, cRingSrc) ok
@@ -1037,10 +1116,12 @@ func harvestAndroidNative cHost, cLib
     for cLdr in aLoadCandFiles
         if fexists(cHost + "/bin/load/" + cLdr)
             cWrapperCode = read(cHost + "/bin/load/" + cLdr)
-            cWrapperCode = patchRingCodeString(cWrapperCode)
-            if direxists("src") write("src/" + cLdr, cWrapperCode) ok
-            if direxists("ring") write("ring/" + cLdr, cWrapperCode) ok
-            lFoundAnything = true
+            if substr(cWrapperCode, "extensions/") = 0
+                cWrapperCode = patchRingCodeString(cWrapperCode)
+                if direxists("src") write("src/" + cLdr, cWrapperCode) ok
+                if direxists("ring") write("ring/" + cLdr, cWrapperCode) ok
+                lFoundAnything = true
+            ok
         ok
     next
 

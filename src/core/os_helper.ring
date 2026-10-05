@@ -76,7 +76,7 @@ func resolveCallerPath cPath
         return cNorm
     ok
 
-    cCallerDir = sysget("RINGENV_CALLER_DIR")
+    cCallerDir = getCallerDir()
     if cCallerDir != ""
         return normalizePath(cCallerDir + "/" + cNorm)
     ok

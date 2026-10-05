@@ -25,23 +25,14 @@ ringpm install ringenv from Azzeddine2017
 ```
 Once installed, the `ringenv` command is immediately available in your terminal.
 
-### Method B: Install from Local Source Repository
-Clone the repository and run the local setup installer:
+### Method B: Install from Local Source Repository (Pure Ring)
+Clone the repository and run the setup installer with Ring on any OS (Windows, Linux, macOS):
 
-- **Windows**:
-  ```cmd
-  git clone https://github.com/Azzeddine2017/ringenv.git
-  cd ringenv
-  setup.bat
-  ```
-
-- **Linux / macOS**:
-  ```bash
-  git clone https://github.com/Azzeddine2017/ringenv.git
-  cd ringenv
-  chmod +x setup.sh
-  ./setup.sh
-  ```
+```bash
+git clone https://github.com/Azzeddine2017/ringenv.git
+cd ringenv
+ring setup.ring
+```
 
 ---
 

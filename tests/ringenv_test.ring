@@ -672,6 +672,17 @@ describe("Extractor - Version Runtime Dir", func {
         expect(substr(cResult, "Ring_fake") > 0).toBeTruthy()
         deleteFolder(cVerDir)
     })
+
+    it("should normalize nested version folder and remove duplicate subfolder", func {
+        cVerDir = "./tests/test_tmp/norm_ver"
+        ensureDir(cVerDir + "/ring/bin")
+        cBin = getBinaryName()
+        write(cVerDir + "/ring/bin/" + cBin, "fake")
+        normalizeVersionFolder(cVerDir)
+        expect(fexists(cVerDir + "/bin/" + cBin)).toBeTruthy()
+        expect(direxists(cVerDir + "/ring")).toBeFalsy()
+        deleteFolder(cVerDir)
+    })
 })
 
 # ====================================================================

@@ -41,6 +41,7 @@ func cmdInstall cVersion, lLight, lForce
                 remove(cCacheZip)
             ok
         but fexists(cVersionDir + "/bin/" + cBinFile) or fexists(cVersionDir + "/" + cBinFile)
+            normalizeVersionFolder(cVersionDir)
             uiBanner("Ring " + cVersion + " Already Installed", toNativePath(cVersionDir))
             ? ""
             ? "  " + uiStyle("Status:  ", C_BOLD + C_WHITE) + uiBadge("ready", C_BOLD + C_BGREEN)

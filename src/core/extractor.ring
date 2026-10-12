@@ -28,6 +28,18 @@ func normalizeVersionFolder cDestFolder
     cBinFile = getBinaryName()
 
     if fexists(cDestFolder + "/bin/" + cBinFile) or fexists(cDestFolder + "/" + cBinFile)
+        # Clean up legacy redundant nested folders if left behind from earlier installations
+        aItems = dir(cDestFolder)
+        for aItem in aItems
+            cName = aItem[1]
+            nType = aItem[2]
+            if cName != "." and cName != ".." and nType = 1
+                cSub = cDestFolder + "/" + cName
+                if fexists(cSub + "/bin/" + cBinFile) or fexists(cSub + "/" + cBinFile)
+                    deleteFolder(cSub)
+                ok
+            ok
+        next
         return true
     ok
 
@@ -62,6 +74,11 @@ func normalizeVersionFolder cDestFolder
                         ok
                     ok
                 next
+
+                # Clean up the original nested subfolder to prevent duplicate copies
+                if fexists(cDestFolder + "/bin/" + cBinFile) or fexists(cDestFolder + "/" + cBinFile)
+                    deleteFolder(cSub)
+                ok
 
                 return true
             ok

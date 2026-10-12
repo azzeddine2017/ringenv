@@ -125,6 +125,12 @@ func main
         on "community"
             cmdHub(aArgs)
 
+        on "refresh"
+            cmdHub(["hub", "refresh"])
+
+        on "update"
+            cmdHub(["hub", "refresh"])
+
         on "venv"
             aVenvArgs = []
             for i = 2 to len(aArgs)
@@ -215,6 +221,7 @@ func showHelp
     ? ""
     ? "  " + uiStyle("Community Hub & External Libraries:", C_BOLD + C_WHITE)
     ? "    " + uiStyle("hub / libs", C_BOLD + C_BMAGENTA) + "               Explore community libraries (default view)"
+    ? "    " + uiStyle("hub refresh", C_BOLD + C_BMAGENTA) + "              Update and refresh package registry cache"
     ? "    " + uiStyle("hub categories", C_BOLD + C_BMAGENTA) + "           List all package categories and domains"
     ? "    " + uiStyle("hub --category <cat>", C_BOLD + C_BMAGENTA) + "     Filter packages by domain (e.g. data, web)"
     ? "    " + uiStyle("hub export <cat> [file]", C_BOLD + C_BMAGENTA) + "  Export category packages to bundle file"
@@ -253,8 +260,9 @@ func showHelp
     ? "     ringenv list                          # Locally installed versions"
     ? "     ringenv list-remote                   # Remote releases on GitHub"
     ? ""
-    ? "  " + uiStyle("3. Explore external community libraries (Bert's addition!):", C_BOLD + C_BYELLOW)
+    ? "  " + uiStyle("3. Explore external community libraries:", C_BOLD + C_BYELLOW)
     ? "     ringenv hub                           # List community libraries only (fast & clean)"
+    ? "     ringenv hub refresh                   # Refresh libraries list"
     ? "     ringenv hub categories                # List all technical domains"
     ? "     ringenv hub --category data           # List Data & Office libraries"
     ? "     ringenv hub export data               # Export data bundle to ringenv-data.txt"

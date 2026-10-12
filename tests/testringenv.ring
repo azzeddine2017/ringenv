@@ -231,6 +231,18 @@ func runAllTests
     assertTrue("getHostRingDir locates a Ring installation", len(cHost) > 0)
     assertTrue("harvestList returns true with valid catalog", harvestList())
 
+    # Test 23: Registry cache parsing
+    cTestRegistry = 'aPackagesRegistry = [' + nl +
+                    '   [' + nl +
+                    '       :name = "xlsxlib",' + nl +
+                    '       :description = "Modern XLSX library",' + nl +
+                    '       :developer = "Azzeddine2017"' + nl +
+                    '   ]' + nl +
+                    ']'
+    aParsedReg = parseRemoteRegistry(cTestRegistry)
+    assertTrue("parseRemoteRegistry parses package list", len(aParsedReg) = 1)
+    assertEqual("parseRemoteRegistry parses package name", aParsedReg[1][:name], "xlsxlib")
+
     # Cleanup test artifacts
     deleteFolder("./tests/test_tmp")
     assertTrue("deleteFolder removes directory recursively", not direxists("./tests/test_tmp"))

@@ -596,6 +596,73 @@ func installBundleByCategory cCatInput
     uiBanner("Category Installation Complete", "" + nSuccess + " packages processed")
     return true
 
+# Refresh and update local package registry cache from GitHub
+func refreshHubCache
+    initRingenvDirs()
+    cCachePath = getCacheDir() + "/registry.ring"
+    cUrl = "https://raw.githubusercontent.com/ring-lang/ring/master/tools/ringpm/registry/registry.ring"
+
+    uiBanner("Refreshing Package Registry Cache", "Updating community and official package database")
+    ? ""
+    ? "  " + uiInfo("Fetching latest registry from GitHub...")
+    ? "  " + uiStyle("URL: " + cUrl, C_DIM)
+    ? ""
+
+    cContent = fetchUrlContentSilent(cUrl)
+
+    # Fallback to system network downloader if libcurl silent fetch was empty
+    if cContent = "" or substr(cContent, "aPackagesRegistry") = 0
+        cTempPath = getCacheDir() + "/registry_temp.ring"
+        if downloadViaSystem(cUrl, cTempPath) or downloadFile(cUrl, cTempPath)
+            if fexists(cTempPath)
+                cContent = read(cTempPath)
+                remove(cTempPath)
+            ok
+        ok
+    ok
+
+    if cContent = "" or substr(cContent, "aPackagesRegistry") = 0
+        ? uiError("Error: Failed to download package registry from GitHub.")
+        if fexists(cCachePath)
+            ? "  " + uiWarning("Preserved existing local cache:")
+            ? "  " + uiStyle(toNativePath(cCachePath), C_DIM)
+        ok
+        ? "  " + uiStyle("Please verify your internet connection and try again.", C_DIM)
+        ? uiStyle("======================================================================", C_CYAN)
+        return false
+    ok
+
+    aParsed = parseRemoteRegistry(cContent)
+    if len(aParsed) = 0
+        ? uiError("Error: Registry content received but format is invalid.")
+        if fexists(cCachePath)
+            ? "  " + uiWarning("Preserved existing local cache.")
+        ok
+        ? uiStyle("======================================================================", C_CYAN)
+        return false
+    ok
+
+    write(cCachePath, cContent)
+    cHubRegistrySource = "GitHub Official Registry (Live)"
+
+    ? uiSuccess("Package registry cache refreshed successfully!")
+    ? "  " + uiStyle("Cache File:    ", C_BOLD + C_WHITE) + uiStyle(toNativePath(cCachePath), C_BOLD + C_BYELLOW)
+    ? "  " + uiStyle("Total Packages:", C_BOLD + C_WHITE) + uiStyle(" " + len(aParsed) + " packages indexed", C_BOLD + C_BGREEN)
+
+    # Sync to active environment / Ring installation ringpm if available
+    cEnvRegDir = exefolder() + "/../tools/ringpm/registry"
+    cEnvReg = cEnvRegDir + "/registry.ring"
+    if direxists(cEnvRegDir)
+        copyFile(cCachePath, cEnvReg)
+        ? "  " + uiSuccess("Synchronized registry to active Ring environment:")
+        ? "    " + uiStyle(toNativePath(cEnvReg), C_DIM)
+    ok
+
+    ? ""
+    ? "  " + uiStyle("Run ", C_WHITE) + uiStyle("ringenv hub", C_BOLD + C_BCYAN) + uiStyle(" to explore community libraries.", C_WHITE)
+    ? uiStyle("======================================================================", C_CYAN)
+    return true
+
 # Display list of community libraries and packages
 func cmdHub aArgs
     cMode = "community"
@@ -663,6 +730,11 @@ func cmdHub aArgs
     but cSubCmd = "official"
         cMode = "official"
         cSubCmd = ""
+    ok
+
+    # Handle refresh cache command
+    if cSubCmd = "refresh" or cSubCmd = "update" or cSubCmd = "--refresh"
+        return refreshHubCache()
     ok
 
     # Handle categories list
@@ -829,6 +901,7 @@ func cmdHub aArgs
     ? "    " + uiStyle("ringenv hub install <# or name>", C_BOLD + C_BCYAN) + "   Install library by row number or name"
     ? "    " + uiStyle("ringenv hub info <# or name>", C_BOLD + C_BCYAN) + "      View library details & repository README"
     ? "    " + uiStyle("ringenv hub search <query>", C_BCYAN) + "        Search across all packages by keyword"
+    ? "    " + uiStyle("ringenv hub refresh", C_BCYAN) + "               Update and refresh package registry cache"
     if cMode = "community"
         ? "    " + uiStyle("ringenv hub --all", C_DIM) + "                  Show all 250+ packages (including games & samples)"
         ? "    " + uiStyle("ringenv hub --official", C_DIM) + "             Show official Ring packages and samples only"

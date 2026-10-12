@@ -216,6 +216,11 @@ ringenv hub info ring-libsql
 # (Specify by package name or by table row number #)
 ringenv hub install xlsxlib
 ringenv hub install 1
+
+# Refresh and update the local package registry cache from GitHub:
+ringenv hub refresh
+# Or top-level shortcut:
+ringenv refresh
 ```
 
 #### Key Features of the Hub:

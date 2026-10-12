@@ -457,6 +457,28 @@ describe("Hub - README Overview Extraction", func {
     })
 })
 
+describe("Hub - Cache Refresh & Registry Parsing", func {
+
+    it("should parse valid registry format", func {
+        cRegistrySample = 'aPackagesRegistry = [' + nl +
+                          '   [' + nl +
+                          '       :name = "xlsxlib",' + nl +
+                          '       :description = "Modern XLSX library",' + nl +
+                          '       :developer = "Azzeddine2017"' + nl +
+                          '   ]' + nl +
+                          ']'
+        aParsed = parseRemoteRegistry(cRegistrySample)
+        expect(len(aParsed)).toBe(1)
+        expect(aParsed[1][:name]).toBe("xlsxlib")
+        expect(aParsed[1][:author]).toBe("Azzeddine2017")
+    })
+
+    it("should resolve cache path for registry", func {
+        cCachePath = getCacheDir() + "/registry.ring"
+        expect(substr(cCachePath, "registry.ring") > 0).toBeTruthy()
+    })
+})
+
 # ====================================================================
 # اختبارات وحدة cmd_venv.ring
 # ====================================================================

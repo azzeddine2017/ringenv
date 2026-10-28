@@ -7,15 +7,11 @@ aPackageInfo = [
 	:developer = "Azzeddine Remmal",
 	:email = "azzeddine.remmal@gmail.com",
 	:license = "MIT License",
-	:version = "1.1.1",
+	:version = "1.1.2",
 	:ringversion = "1.27",
 	:versions = [
 		[
-			:version = "1.1.1",
-			:branch = "master"
-		],
-		[
-			:version = "1.0.3",
+			:version = "1.1.2",
 			:branch = "master"
 		]
 	],
@@ -51,7 +47,14 @@ aPackageInfo = [
 		"docs/version_management.md",
 		"docs/virtual_environments.md",
 		"docs/community_hub.md",
-		"docs/packaging_and_distribution.md"
+		"docs/packaging_and_distribution.md",
+		"templates/android/recipes/curl.cmake",
+		"templates/android/recipes/openssl.cmake",
+		"templates/android/recipes/glaze.cmake",
+		"templates/android/recipes/httplib.cmake",
+		"templates/android/recipes/libuv.cmake",
+		"templates/android/recipes/raylib.cmake",
+		"templates/android/recipes/webview.cmake"
 	],
 	:ringfolderfiles = [
 
